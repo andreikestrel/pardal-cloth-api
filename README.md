@@ -1,59 +1,150 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# pardal-cloth-api
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend and frontend monorepo for **Pardal Cloth** — a full-featured e-commerce platform for a clothing store, built as a portfolio project to demonstrate production-level fullstack skills.
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Pardal Cloth covers the complete e-commerce cycle: product catalog with size/color variations, cart with automatic promotions, coupon codes, checkout, payment processing (Mercado Pago + Asaas), order tracking with real-time status updates, and a full admin panel.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+This repository is one of three independent services that make up the platform:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Repository | Stack | Role |
+|---|---|---|
+| `pardal-cloth-api` | Laravel 12 + Inertia.js + Vue 3 | Monorepo: API + frontend **(this repo)** |
+| `pardal-cloth-ws` | Node.js + Socket.IO | Real-time WebSocket service |
+| `pardal-cloth-app` | Flutter | Mobile app *(planned)* |
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**Backend**
+- PHP 8.2 + Laravel 12
+- MySQL — UUID primary keys across all tables, `decimal(10,2)` for all monetary values
+- Laravel Sanctum — session-based authentication (same-origin, no JWT overhead)
+- Spatie Permission — RBAC with `admin` and `customer` roles
+- Spatie Media Library — image uploads for products and categories
+- Laravel Queues — async jobs for email, real-time notifications and stock alerts
+- DomPDF — PDF invoice generation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Frontend**
+- Vue 3 + TypeScript + Inertia.js v2
+- Tailwind CSS v4
+- Ziggy — typed Laravel route helpers in TypeScript
 
-## Laravel Sponsors
+## Architecture
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Request lifecycle
 
-### Premium Partners
+```
+HTTP Request
+  → Route (routes/web/*.php)
+  → Middleware (auth, role:admin via Spatie)
+  → FormRequest (validation)
+  → Controller (thin — receives validated data, calls Service)
+  → Service (business logic, calls Models, dispatches Jobs)
+  → Model (Eloquent)
+  → Resource (transforms output)
+  → Inertia::render() or JsonResponse
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Service layer
 
-## Contributing
+Business logic lives entirely in `app/Services/`, never in controllers or models:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Service | Responsibility |
+|---|---|
+| `CartService` | Loads current prices from DB, applies promotions, builds `CartCalculation` |
+| `PromotionService` | Evaluates active promotions in priority order, one `discount_type` per item |
+| `CouponService` | Validates all coupon rules, calculates discount amount |
+| `OrderService` | Orchestrates cart + coupon + stock, creates order, dispatches jobs |
+| `StockService` | Reserve on order, release on cancel, manual adjustments with audit log |
+| `PaymentService` | Resolves active gateway at runtime, no `if/else` per gateway |
 
-## Code of Conduct
+### Payment gateways — Strategy Pattern
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Both gateways implement `PaymentGatewayInterface` and extend `AbstractGateway`. `PaymentService` resolves the active one at runtime from `payment_settings` — adding a third gateway requires only implementing the interface and registering the binding in `AppServiceProvider`.
 
-## Security Vulnerabilities
+```
+PaymentGatewayInterface
+  ├── MercadoPagoGateway  (Checkout Pro, Pix)
+  └── AsaasGateway        (Pix, Boleto, Credit Card)
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Real-time order updates
 
-## License
+The WebSocket concern is intentionally decoupled into a separate Node.js service (`pardal-cloth-ws`). When an order status changes, `NotifyOrderStatusChanged` job sends an HTTP POST to the WS server with a shared secret. The WS server broadcasts the event to the customer's Socket.IO room — no persistent connections in PHP.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+Admin updates order status
+  → OrderService::updateStatus()
+  → NotifyOrderStatusChanged job (queue)
+  → POST /internal/notify → pardal-cloth-ws
+  → io.to("order:{id}").emit("order:status_updated")
+  → Customer's browser updates without reload
+```
+
+### Cart state
+
+Cart lives on the frontend (`useCart` composable + localStorage). The server only calculates totals via `POST /cart/calculate`. At order creation, the server recalculates everything independently — the total sent by the frontend is always ignored to prevent price manipulation.
+
+## Database
+
+19 tables, all with UUID primary keys:
+
+`users` · `categories` · `products` · `product_variations` · `promotions` · `coupons` · `coupon_uses` · `orders` · `order_items` · `order_status_history` · `payments` · `payment_settings` · `stock_movements` · `settings`
+
+Plus: `roles` · `permissions` · `media` (Spatie packages) · `cache` · `jobs`
+
+## Project Structure
+
+```
+app/
+├── Contracts/          # PaymentGatewayInterface
+├── DataTransferObjects/ # PaymentResult, CartCalculation, CartItemData
+├── Gateways/           # MercadoPagoGateway, AsaasGateway (+ AbstractGateway)
+├── Http/
+│   ├── Controllers/    # Thin — delegate to Services
+│   ├── Middleware/     # HandleInertiaRequests (shared props)
+│   ├── Requests/       # Form validation
+│   └── Resources/      # API output transformation
+├── Jobs/               # SendOrderConfirmationEmail, NotifyOrderStatusChanged, AlertLowStock
+├── Models/             # Eloquent + HasUuids + relationships
+├── Providers/          # AppServiceProvider (gateway bindings, UUID morphs)
+└── Services/           # All business logic
+
+resources/js/
+├── Pages/              # Inertia page components (Shop, Cart, Checkout, Orders, Admin)
+├── Components/         # Reusable Vue components (UI, Shop, Cart, Admin)
+├── Layouts/            # AppLayout, AdminLayout, AuthLayout
+├── Composables/        # useCart, useOrderSocket, usePromotion
+└── types/              # Shared TypeScript types (index.d.ts)
+```
+
+## Local Setup
+
+```bash
+git clone https://github.com/andreikestrel/pardal-cloth-api.git
+cd pardal-cloth-api
+
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
+
+# Configure .env: DB_DATABASE, DB_USERNAME, DB_PASSWORD
+php artisan migrate
+
+php artisan db:seed          # admin + sample products + promotions
+
+composer run dev             # starts Laravel + Vite + Queue worker + Pail
+```
+
+## Key Decisions
+
+- **Monorepo (Laravel + Inertia)** over separate SPA — same origin, session auth, no CORS, SSR on page load.
+- **WebSocket as separate service** — demonstrates polyglot architecture; Node.js handles persistent connections naturally.
+- **Strategy Pattern for gateways** — new gateway = implement interface + one line in AppServiceProvider.
+- **UUID PKs everywhere** — safe to expose in URLs, no enumeration attacks.
+- **Server always recalculates totals** — frontend totals are display-only; any mismatch > 1 cent at order creation returns 422.
+- **Credentials encrypted in DB** — admin updates keys via UI without server access; `Crypt::encrypt()` with AES-256-CBC.
+- **Cart on frontend** — no `carts` table, no cleanup jobs; server recalculates at checkout.
