@@ -57,6 +57,14 @@ class PaymentService
         return app("gateway.{$setting->gateway}");
     }
 
+    /**
+     * Dispatches the incoming webhook to the active gateway for validation and processing.
+     */
+    public function handleWebhook(\Illuminate\Http\Request $request): void
+    {
+        $this->resolveGateway()->handleWebhook($request);
+    }
+
     private function activeGatewayName(): string
     {
         return PaymentSetting::where('active', true)->value('gateway')

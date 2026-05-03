@@ -115,6 +115,18 @@ class OrderService
         NotifyOrderStatusChanged::dispatch($order, $newStatus, $note);
     }
 
+    /**
+     * Generates a PDF invoice for the order using DomPDF.
+     */
+    public function generateInvoice(Order $order): \Illuminate\Http\Response
+    {
+        $order->load(['user', 'items.variation.product']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', ['order' => $order]);
+
+        return $pdf->download("invoice-{$order->id}.pdf");
+    }
+
     private function recordCouponUse(Coupon $coupon, User $user, Order $order): void
     {
         CouponUse::create([
