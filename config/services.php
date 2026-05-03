@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'ws' => [
+        'url'             => env('WS_URL', 'http://localhost:3001'),
+        'internal_secret' => env('WS_INTERNAL_SECRET'),
+    ],
+
 ];
