@@ -1,4 +1,4 @@
-# pardal-cloth-api
+# pardal-cloth
 
 Backend and frontend monorepo for **Pardal Cloth** — a full-featured e-commerce platform for a clothing store, built as a portfolio project to demonstrate production-level fullstack skills.
 
@@ -10,7 +10,7 @@ This repository is one of three independent services that make up the platform:
 
 | Repository | Stack | Role |
 |---|---|---|
-| `pardal-cloth-api` | Laravel 12 + Inertia.js + Vue 3 | Monorepo: API + frontend **(this repo)** |
+| `pardal-cloth` | Laravel 12 + Inertia.js + Vue 3 | Monorepo: API + frontend **(this repo)** |
 | `pardal-cloth-ws` | Node.js + Socket.IO | Real-time WebSocket service |
 | `pardal-cloth-app` | Flutter | Mobile app *(planned)* |
 
@@ -122,8 +122,8 @@ resources/js/
 ## Local Setup
 
 ```bash
-git clone https://github.com/andreikestrel/pardal-cloth-api.git
-cd pardal-cloth-api
+git clone https://github.com/andreikestrel/pardal-cloth.git
+cd pardal-cloth
 
 composer install
 npm install
