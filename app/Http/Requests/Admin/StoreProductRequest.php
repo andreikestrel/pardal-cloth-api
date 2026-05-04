@@ -21,6 +21,7 @@ class StoreProductRequest extends FormRequest
             'variations.*.price'          => ['required', 'numeric', 'min:0'],
             'variations.*.stock'          => ['required', 'integer', 'min:0'],
             'variations.*.sku'            => ['nullable', 'string', 'max:100'],
+            'variations.*.barcode'        => ['nullable', 'string', 'max:100', 'distinct'],
         ];
     }
 }

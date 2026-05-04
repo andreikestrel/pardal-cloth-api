@@ -17,6 +17,14 @@ class UpdateProductRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'category_id' => ['required', 'uuid', 'exists:categories,id'],
             'image'       => ['nullable', 'image', 'max:4096'],
+
+            'variations'               => ['sometimes', 'array'],
+            'variations.*.size'        => ['required_with:variations', 'string', 'max:10'],
+            'variations.*.color'       => ['required_with:variations', 'string', 'max:50'],
+            'variations.*.price'       => ['required_with:variations', 'numeric', 'min:0'],
+            'variations.*.stock'       => ['required_with:variations', 'integer', 'min:0'],
+            'variations.*.sku'         => ['nullable', 'string', 'max:100'],
+            'variations.*.barcode'     => ['nullable', 'string', 'max:100', 'distinct'],
         ];
     }
 }

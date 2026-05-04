@@ -25,6 +25,7 @@ export interface ProductVariation {
     size: string
     color: string
     sku: string
+    barcode: string | null
     price: string
     stock: number
     min_stock: number

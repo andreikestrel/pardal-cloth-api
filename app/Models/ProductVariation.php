@@ -16,6 +16,7 @@ class ProductVariation extends Model
         'size',
         'color',
         'sku',
+        'barcode',
         'price',
         'stock',
         'min_stock',
