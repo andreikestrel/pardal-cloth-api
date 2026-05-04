@@ -8,6 +8,8 @@ use App\Http\Requests\Shop\ApplyCouponRequest;
 use App\Services\CartService;
 use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CartController extends Controller
 {
@@ -15,6 +17,11 @@ class CartController extends Controller
         private readonly CartService $cartService,
         private readonly CouponService $couponService,
     ) {}
+
+    public function page(): Response
+    {
+        return Inertia::render('Shop/Cart');
+    }
 
     public function calculate(CalculateCartRequest $request): JsonResponse
     {

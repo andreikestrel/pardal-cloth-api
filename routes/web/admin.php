@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryAdminController;
 use App\Http\Controllers\Admin\CouponAdminController;
+use App\Http\Controllers\Admin\DashboardAdminController;
 use App\Http\Controllers\Admin\OrderAdminController;
 use App\Http\Controllers\Admin\ProductAdminController;
 use App\Http\Controllers\Admin\PromotionAdminController;
@@ -11,6 +12,9 @@ use App\Http\Controllers\Admin\StockAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    // Dashboard
+    Route::get('/', [DashboardAdminController::class, 'index'])->name('dashboard');
 
     // Products
     Route::get('/products', [ProductAdminController::class, 'index'])->name('products.index');

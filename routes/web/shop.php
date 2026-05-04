@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Shop\AboutController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CategoryController;
 use App\Http\Controllers\Shop\HomeController;
@@ -14,5 +15,8 @@ Route::get('/shop/{product:slug}', [ProductController::class, 'show'])->name('sh
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
 
+Route::get('/cart', [CartController::class, 'page'])->name('cart.index');
 Route::post('/cart/calculate', [CartController::class, 'calculate'])->name('cart.calculate');
 Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.apply-coupon');
+
+Route::get('/about', [AboutController::class, 'index'])->name('about');
