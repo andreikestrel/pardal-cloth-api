@@ -23,8 +23,14 @@ const navItems = [
     { label: 'Cupons',     href: route('admin.coupons.index') },
     { label: 'Estoque',    href: route('admin.stock.index') },
     { label: 'Relatórios', href: route('admin.reports.index') },
-    { label: 'Config.',    href: route('admin.settings.general') },
 ]
+
+const settingsItems = [
+    { label: 'Geral',      href: route('admin.settings.general') },
+    { label: 'Pagamentos', href: route('admin.settings.payment') },
+]
+
+const currentPath = computed(() => page.url)
 </script>
 
 <template>
@@ -39,15 +45,34 @@ const navItems = [
                 <p class="text-white/50 text-xs mt-0.5">Painel admin</p>
             </div>
 
-            <nav class="flex-1 py-3">
+            <nav class="flex-1 py-3 overflow-y-auto">
                 <Link
                     v-for="item in navItems"
                     :key="item.href"
                     :href="item.href"
-                    class="block px-5 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    :class="['block px-5 py-2.5 text-sm transition-colors',
+                        currentPath.startsWith(item.href)
+                            ? 'text-white bg-white/15 font-medium'
+                            : 'text-white/70 hover:text-white hover:bg-white/10']"
                 >
                     {{ item.label }}
                 </Link>
+
+                <!-- Settings group -->
+                <div class="mt-3 pt-3 border-t border-white/10">
+                    <p class="px-5 pb-1 text-xs text-white/30 uppercase tracking-wider">Configurações</p>
+                    <Link
+                        v-for="item in settingsItems"
+                        :key="item.href"
+                        :href="item.href"
+                        :class="['block px-5 py-2.5 text-sm transition-colors',
+                            currentPath.startsWith(item.href)
+                                ? 'text-white bg-white/15 font-medium'
+                                : 'text-white/70 hover:text-white hover:bg-white/10']"
+                    >
+                        {{ item.label }}
+                    </Link>
+                </div>
             </nav>
 
             <div class="px-5 py-4 border-t border-white/10 text-xs text-white/40">

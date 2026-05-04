@@ -4,6 +4,7 @@ import { useForm } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/UI/PageHeader.vue'
+import SettingsTabs from '@/Components/Admin/SettingsTabs.vue'
 import FormField from '@/Components/UI/FormField.vue'
 import PrimaryButton from '@/Components/UI/PrimaryButton.vue'
 
@@ -41,7 +42,8 @@ function submit() {
 
 <template>
     <AdminLayout>
-        <PageHeader title="Configurações de pagamento" />
+        <PageHeader title="Configurações" />
+        <SettingsTabs />
 
         <div class="max-w-2xl">
             <form @submit.prevent="submit" class="space-y-5">
