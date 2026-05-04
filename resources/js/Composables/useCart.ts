@@ -1,5 +1,4 @@
 import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import type { CartLineItem, CartCalculation } from '@/types'
 
@@ -60,6 +59,10 @@ function clearCart(): void {
     localStorage.removeItem(STORAGE_KEY)
 }
 
+function getCsrfToken(): string {
+    return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
+}
+
 async function calculate(): Promise<void> {
     if (items.value.length === 0) {
         calculation.value = null
@@ -69,27 +72,23 @@ async function calculate(): Promise<void> {
     isCalculating.value = true
 
     try {
-        const payload: Record<string, unknown> = {
+        const payload = {
             items: items.value.map((i) => ({ variation_id: i.variation_id, quantity: i.quantity })),
-        }
-
-        if (couponCode.value) {
-            payload.coupon_code = couponCode.value
+            ...(couponCode.value ? { coupon_code: couponCode.value } : {}),
         }
 
         const endpoint = couponCode.value ? route('cart.apply-coupon') : route('cart.calculate')
+
         const res = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
             body: JSON.stringify(payload),
             credentials: 'same-origin',
         })
-
-        // Add CSRF token from meta tag
-        const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
-        if (csrf) {
-            (payload as Record<string, unknown>)._token = csrf
-        }
 
         if (res.ok) {
             calculation.value = await res.json()
