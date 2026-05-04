@@ -2,9 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Root redirects to admin panel
+Route::get('/', fn () => redirect('/admin'));
 
 require __DIR__ . '/web/auth.php';
 require __DIR__ . '/web/shop.php';
