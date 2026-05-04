@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateOrderStatusRequest;
-use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\RedirectResponse;
@@ -17,12 +16,8 @@ class OrderAdminController extends Controller
 
     public function index(): Response
     {
-        $orders = Order::with(['user', 'payment'])
-            ->latest()
-            ->paginate(25);
-
         return Inertia::render('Admin/Orders/Index', [
-            'orders' => OrderResource::collection($orders),
+            'orders' => Order::with('user')->latest()->get(),
         ]);
     }
 

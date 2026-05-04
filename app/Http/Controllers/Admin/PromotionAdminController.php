@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePromotionRequest;
 use App\Http\Requests\Admin\UpdatePromotionRequest;
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Promotion;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -15,13 +17,16 @@ class PromotionAdminController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Promotions/Index', [
-            'promotions' => Promotion::latest()->paginate(20),
+            'promotions' => Promotion::latest()->get(),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Promotions/Create');
+        return Inertia::render('Admin/Promotions/Create', [
+            'categories' => Category::all(['id', 'name']),
+            'products'   => Product::all(['id', 'name']),
+        ]);
     }
 
     public function store(StorePromotionRequest $request): RedirectResponse
@@ -35,7 +40,9 @@ class PromotionAdminController extends Controller
     public function edit(Promotion $promotion): Response
     {
         return Inertia::render('Admin/Promotions/Edit', [
-            'promotion' => $promotion,
+            'promotion'  => $promotion,
+            'categories' => Category::all(['id', 'name']),
+            'products'   => Product::all(['id', 'name']),
         ]);
     }
 

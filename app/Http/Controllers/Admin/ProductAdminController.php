@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
-use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
 use App\Services\StockService;
@@ -20,9 +19,7 @@ class ProductAdminController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Products/Index', [
-            'products' => ProductResource::collection(
-                Product::with(['category', 'media', 'variations'])->paginate(20)
-            ),
+            'products' => Product::with(['category', 'variations'])->get(),
         ]);
     }
 

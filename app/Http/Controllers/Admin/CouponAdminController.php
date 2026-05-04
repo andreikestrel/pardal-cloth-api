@@ -15,7 +15,7 @@ class CouponAdminController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/Coupons/Index', [
-            'coupons' => Coupon::withCount('uses')->latest()->paginate(20),
+            'coupons' => Coupon::withCount('uses')->latest()->get(),
         ]);
     }
 

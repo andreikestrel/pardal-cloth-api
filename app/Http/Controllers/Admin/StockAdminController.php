@@ -19,7 +19,7 @@ class StockAdminController extends Controller
         return Inertia::render('Admin/Stock/Index', [
             'variations' => ProductVariation::with('product')
                 ->orderBy('stock')
-                ->paginate(50),
+                ->get(),
         ]);
     }
 
