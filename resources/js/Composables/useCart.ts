@@ -8,6 +8,7 @@ const items = ref<CartLineItem[]>(loadFromStorage())
 const calculation = ref<CartCalculation | null>(null)
 const couponCode = ref<string | null>(null)
 const isCalculating = ref(false)
+const isOpen = ref(false)
 
 function loadFromStorage(): CartLineItem[] {
     try {
@@ -32,7 +33,13 @@ function addItem(variationId: string, quantity = 1): void {
     }
 
     persist()
+    isOpen.value = true
+    calculate()
 }
+
+function openCart(): void { isOpen.value = true; calculate() }
+function closeCart(): void { isOpen.value = false }
+function toggleCart(): void { isOpen.value ? closeCart() : openCart() }
 
 function removeItem(variationId: string): void {
     items.value = items.value.filter((i) => i.variation_id !== variationId)
@@ -117,6 +124,7 @@ export function useCart() {
         calculation,
         couponCode,
         isCalculating,
+        isOpen,
         itemCount,
         isEmpty,
         addItem,
@@ -126,5 +134,8 @@ export function useCart() {
         calculate,
         applyCoupon,
         removeCoupon,
+        openCart,
+        closeCart,
+        toggleCart,
     }
 }

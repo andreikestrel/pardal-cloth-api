@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import { useCart } from '@/Composables/useCart'
+import CartDrawer from '@/Components/Shop/CartDrawer.vue'
 import type { PageProps } from '@/types'
 
 const page = usePage<PageProps>()
@@ -10,7 +11,7 @@ const user = computed(() => page.props.auth.user)
 const settings = computed(() => page.props.settings)
 const flash = computed(() => page.props.flash)
 
-const { itemCount } = useCart()
+const { itemCount, openCart } = useCart()
 
 const themeVars = computed(() => ({
     '--color-primary':   settings.value.primary_color   || '#111827',
@@ -50,8 +51,9 @@ const themeVars = computed(() => ({
 
                 <!-- Right side -->
                 <div class="flex items-center gap-3 text-sm">
-                    <!-- Cart icon -->
-                    <Link :href="route('cart.index')" class="relative text-gray-700 hover:text-gray-900">
+                    <!-- Cart button — opens side drawer -->
+                    <button @click="openCart" aria-label="Abrir carrinho"
+                        class="relative text-gray-700 hover:text-gray-900">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.4 7h12.8M7 13H5.4M17 21a1 1 0 100-2 1 1 0 000 2zm-10 0a1 1 0 100-2 1 1 0 000 2z" />
@@ -61,7 +63,7 @@ const themeVars = computed(() => ({
                             :style="{ backgroundColor: 'var(--color-primary)' }">
                             {{ itemCount > 9 ? '9+' : itemCount }}
                         </span>
-                    </Link>
+                    </button>
 
                     <template v-if="user">
                         <Link :href="route('orders.index')" class="hidden sm:inline text-gray-600 hover:text-gray-900">Meus pedidos</Link>
@@ -98,5 +100,8 @@ const themeVars = computed(() => ({
         <footer class="border-t border-gray-200 py-8 text-center text-sm text-gray-400">
             &copy; {{ new Date().getFullYear() }} {{ settings.company_name }}. Todos os direitos reservados.
         </footer>
+
+        <!-- Cart drawer (global, always mounted) -->
+        <CartDrawer />
     </div>
 </template>

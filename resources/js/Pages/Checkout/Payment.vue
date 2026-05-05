@@ -79,7 +79,7 @@ const methods = [
             <!-- Initiate button (shown before payment is started) -->
             <button
                 v-if="!pixCode && !boletoUrl && !paymentUrl"
-                @click="/* handled by parent form post */"
+                type="submit"
                 :disabled="loading"
                 class="w-full bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-gray-700 disabled:opacity-50"
             >
