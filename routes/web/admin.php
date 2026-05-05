@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CatalogAdminController;
 use App\Http\Controllers\Admin\CategoryAdminController;
 use App\Http\Controllers\Admin\CouponAdminController;
 use App\Http\Controllers\Admin\DashboardAdminController;
@@ -66,6 +67,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Reports
     Route::get('/reports', [ReportAdminController::class, 'index'])->name('reports.index');
+
+    // Catalog (hero carousel)
+    Route::get('/catalog/slides', [CatalogAdminController::class, 'slides'])->name('catalog.slides');
+    Route::post('/catalog/slides', [CatalogAdminController::class, 'storeSlide'])->name('catalog.slides.store');
+    Route::post('/catalog/slides/{slide}', [CatalogAdminController::class, 'updateSlide'])->name('catalog.slides.update');
+    Route::delete('/catalog/slides/{slide}', [CatalogAdminController::class, 'destroySlide'])->name('catalog.slides.destroy');
+    Route::post('/catalog/slides/reorder', [CatalogAdminController::class, 'reorderSlides'])->name('catalog.slides.reorder');
 
     // Users
     Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');

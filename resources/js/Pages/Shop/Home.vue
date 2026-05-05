@@ -2,9 +2,20 @@
 import { Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import HeroCarousel from '@/Components/Shop/HeroCarousel.vue'
 import type { Product, Category, Promotion } from '@/types'
 
+interface Slide {
+    id: string
+    title: string | null
+    subtitle: string | null
+    link_url: string | null
+    link_label: string | null
+    image_url: string | null
+}
+
 defineProps<{
+    slides: Slide[]
     featuredProducts: Product[]
     categories: Category[]
     activePromotions: Promotion[]
@@ -22,8 +33,9 @@ function lowestPrice(product: Product): string {
 
 <template>
     <AppLayout>
-        <!-- Hero -->
-        <section class="bg-gray-900 text-white py-20 px-4 text-center">
+        <!-- Carousel (or fallback hero) -->
+        <HeroCarousel v-if="slides.length" :slides="slides" />
+        <section v-else class="bg-gray-900 text-white py-20 px-4 text-center">
             <h1 class="text-4xl font-bold mb-4">Moda com estilo</h1>
             <p class="text-gray-300 mb-8">As melhores peças para o seu guarda-roupa</p>
             <Link :href="route('shop.index')" class="bg-white text-gray-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-100">

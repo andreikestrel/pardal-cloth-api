@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\HeroSlide;
 use App\Models\Product;
 use App\Models\Promotion;
 use Inertia\Inertia;
@@ -14,6 +15,10 @@ class HomeController extends Controller
     public function index(): Response
     {
         return Inertia::render('Shop/Home', [
+            'slides' => HeroSlide::with('media')
+                ->where('active', true)
+                ->orderBy('sort_order')
+                ->get(),
             'featuredProducts' => Product::with(['variations', 'media', 'category'])
                 ->whereHas('variations', fn ($q) => $q->where('stock', '>', 0))
                 ->latest()

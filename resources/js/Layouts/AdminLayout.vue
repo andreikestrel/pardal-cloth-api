@@ -22,6 +22,7 @@ const navItems = [
     { label: 'Promoções',  href: route('admin.promotions.index') },
     { label: 'Cupons',     href: route('admin.coupons.index') },
     { label: 'Estoque',    href: route('admin.stock.index') },
+    { label: 'Catálogo',   href: route('admin.catalog.slides') },
     { label: 'Relatórios', href: route('admin.reports.index') },
     { label: 'Usuários',   href: route('admin.users.index') },
 ]
