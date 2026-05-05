@@ -24,7 +24,7 @@ function onLogoChange(e: Event) {
 }
 
 function submit() {
-    form.post(route('admin.settings.update-general'), { forceFormData: true, _method: 'PUT' } as any)
+    form.put(route('admin.settings.update-general'), { forceFormData: true })
 }
 </script>
 
