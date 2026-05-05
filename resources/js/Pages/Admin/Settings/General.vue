@@ -11,6 +11,7 @@ import type { Settings } from '@/types'
 const props = defineProps<{ settings: Settings }>()
 
 const form = useForm({
+    _method:         'PUT',
     company_name:    props.settings.company_name,
     primary_color:   props.settings.primary_color,
     secondary_color: props.settings.secondary_color,
@@ -24,7 +25,8 @@ function onLogoChange(e: Event) {
 }
 
 function submit() {
-    form.put(route('admin.settings.update-general'), { forceFormData: true })
+    // PHP only parses multipart/form-data on POST — use method spoofing (_method=PUT)
+    form.post(route('admin.settings.update-general'), { forceFormData: true })
 }
 </script>
 
