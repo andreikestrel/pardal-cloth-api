@@ -9,14 +9,12 @@ use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
-use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProductAdminController extends Controller
 {
-    public function __construct(private readonly StockService $stockService) {}
 
     public function index(): Response
     {
@@ -54,7 +52,7 @@ class ProductAdminController extends Controller
     public function edit(Product $product): Response
     {
         return Inertia::render('Admin/Products/Edit', [
-            'product'    => new ProductResource($product->load(['category', 'media', 'variations', 'tags'])),
+            'product'    => (new ProductResource($product->load(['category', 'media', 'variations', 'tags'])))->resolve(),
             'categories' => Category::all(),
             'allTags'    => Tag::ordered()->get(['id', 'name', 'color']),
         ]);

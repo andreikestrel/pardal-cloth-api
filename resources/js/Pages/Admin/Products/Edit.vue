@@ -26,7 +26,7 @@ defineProps<{ product: Product; categories: Category[]; allTags: Tag[] }>()
                 :product="product"
                 :categories="categories"
                 :all-tags="allTags"
-                :submit-route="route('admin.products.edit', product.id)"
+                :submit-route="route('admin.products.update', product.id)"
                 method="put"
             >
                 <template #cancel>
