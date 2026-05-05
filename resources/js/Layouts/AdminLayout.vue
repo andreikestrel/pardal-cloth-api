@@ -59,11 +59,10 @@ const currentPath = computed(() => page.url)
                 <Link :href="route('admin.dashboard')" class="flex items-center gap-2 text-white">
                     <img v-if="settings.logo" :src="settings.logo" :alt="settings.company_name" class="h-7 w-auto" />
                     <template v-else>
-                        <PardaLogo class="h-6 w-auto" />
+                        <PardaLogo class="h-4 w-auto" />
                         <span class="font-semibold text-base">{{ settings.company_name }}</span>
                     </template>
                 </Link>
-                <p class="text-white/50 text-xs mt-0.5">Painel admin</p>
             </div>
 
             <nav class="flex-1 py-3 overflow-y-auto">
