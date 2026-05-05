@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Shop\AboutController;
+use App\Http\Controllers\Shop\BlogController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CategoryController;
 use App\Http\Controllers\Shop\HomeController;
@@ -20,3 +21,6 @@ Route::post('/store/cart/calculate', [CartController::class, 'calculate'])->name
 Route::post('/store/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.apply-coupon');
 
 Route::get('/store/about', [AboutController::class, 'index'])->name('about');
+
+Route::get('/blog',           [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}',    [BlogController::class, 'show'])->name('blog.show');

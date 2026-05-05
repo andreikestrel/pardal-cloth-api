@@ -46,6 +46,7 @@ const themeVars = computed(() => ({
                 <nav class="hidden md:flex items-center gap-6 text-sm">
                     <Link :href="route('shop.index')" class="text-gray-600 hover:text-gray-900">Loja</Link>
                     <Link :href="route('categories.index')" class="text-gray-600 hover:text-gray-900">Categorias</Link>
+                    <Link v-if="settings.blog_enabled" :href="route('blog.index')" class="text-gray-600 hover:text-gray-900">Blog</Link>
                     <Link :href="route('about')" class="text-gray-600 hover:text-gray-900">Sobre</Link>
                 </nav>
 
@@ -86,6 +87,7 @@ const themeVars = computed(() => ({
             <div class="md:hidden border-t border-gray-100 px-4 py-2 flex gap-5 text-sm text-gray-600 overflow-x-auto">
                 <Link :href="route('shop.index')" class="whitespace-nowrap hover:text-gray-900">Loja</Link>
                 <Link :href="route('categories.index')" class="whitespace-nowrap hover:text-gray-900">Categorias</Link>
+                <Link v-if="settings.blog_enabled" :href="route('blog.index')" class="whitespace-nowrap hover:text-gray-900">Blog</Link>
                 <Link :href="route('about')" class="whitespace-nowrap hover:text-gray-900">Sobre</Link>
                 <Link v-if="user" :href="route('orders.index')" class="whitespace-nowrap hover:text-gray-900">Meus pedidos</Link>
             </div>
