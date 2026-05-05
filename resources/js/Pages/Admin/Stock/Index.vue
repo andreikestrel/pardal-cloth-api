@@ -1,39 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
-import { route } from 'ziggy-js'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/UI/PageHeader.vue'
 import DataTable from '@/Components/Admin/DataTable.vue'
+import StockAdjustModal from '@/Components/Admin/StockAdjustModal.vue'
 import type { ProductVariation, Product } from '@/types'
 
 type VariationWithProduct = ProductVariation & { product: Pick<Product, 'name'> }
 
-const props = defineProps<{ variations: VariationWithProduct[] }>()
+defineProps<{ variations: VariationWithProduct[] }>()
 
 const headers = ['Produto', 'Tamanho', 'Cor', 'SKU', 'Estoque', 'Mínimo', 'Ação']
 
-// Tracks which row is in edit mode (variation id → form instance)
-const editing = ref<string | null>(null)
+const selected = ref<VariationWithProduct | null>(null)
 
-const adjustForm = useForm({ quantity: 0, reason: '' })
-
-function startEdit(v: VariationWithProduct) {
-    editing.value = v.id
-    adjustForm.quantity = 0
-    adjustForm.reason = ''
-}
-
-function cancelEdit() {
-    editing.value = null
-}
-
-function submitAdjust(id: string) {
-    adjustForm.post(route('admin.stock.adjust', id), {
-        preserveScroll: true,
-        onSuccess: () => { editing.value = null },
-    })
-}
+function openAdjust(v: VariationWithProduct) { selected.value = v }
+function closeAdjust() { selected.value = null }
 
 function isLow(v: VariationWithProduct) {
     return v.stock <= v.min_stock
@@ -60,26 +42,9 @@ function isLow(v: VariationWithProduct) {
                 </td>
                 <td class="px-5 py-3 text-sm text-gray-500">{{ v.min_stock }}</td>
                 <td class="px-5 py-3 text-sm">
-                    <!-- Inline adjust form -->
-                    <div v-if="editing === v.id" class="flex items-center gap-2">
-                        <input v-model.number="adjustForm.quantity" type="number"
-                            placeholder="±qtd"
-                            class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                        <input v-model="adjustForm.reason" type="text"
-                            placeholder="Motivo"
-                            class="w-32 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                        <button @click="submitAdjust(v.id)"
-                            class="text-xs text-white px-2.5 py-1 rounded-lg"
-                            style="background-color: var(--color-primary)">
-                            OK
-                        </button>
-                        <button @click="cancelEdit"
-                            class="text-xs text-gray-500 hover:text-gray-700">
-                            ✕
-                        </button>
-                    </div>
-                    <button v-else @click="startEdit(v)"
-                        class="text-gray-500 hover:text-gray-800 text-sm">
+                    <button @click="openAdjust(v)"
+                        class="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
+                        style="background-color: var(--color-primary)">
                         Ajustar
                     </button>
                 </td>
@@ -90,5 +55,7 @@ function isLow(v: VariationWithProduct) {
                 </td>
             </tr>
         </DataTable>
+
+        <StockAdjustModal v-if="selected" :variation="selected" @close="closeAdjust" />
     </AdminLayout>
 </template>

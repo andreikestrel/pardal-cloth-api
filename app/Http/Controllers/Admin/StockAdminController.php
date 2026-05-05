@@ -31,8 +31,9 @@ class StockAdminController extends Controller
             $variation,
             $request->validated('quantity'),
             $request->validated('reason'),
+            $request->user(),
         );
 
-        return back()->with('success', 'Stock adjusted successfully.');
+        return back()->with('success', 'Estoque ajustado com sucesso.');
     }
 }
