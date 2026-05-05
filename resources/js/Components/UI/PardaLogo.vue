@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ class?: string }>()
+defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
