@@ -24,6 +24,7 @@ const form = useForm({
     name:        props.product?.name ?? '',
     slug:        props.product?.slug ?? '',
     description: props.product?.description ?? '',
+    base_price:  props.product?.base_price ?? '',
     category_id: props.product?.category_id ?? '',
     image:       null as File | null,
     tag_ids:     (props.product?.tags ?? []).map((t: Tag) => t.id) as number[],
@@ -72,6 +73,12 @@ function submit() {
                     <option value="">Selecione…</option>
                     <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                 </select>
+            </FormField>
+
+            <FormField label="Preço base (R$)" :error="form.errors.base_price" required>
+                <input v-model="form.base_price" type="number" min="0" step="0.01" required placeholder="0,00"
+                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                <p class="text-xs text-gray-400 mt-1">Preço exibido no catálogo antes de selecionar variação.</p>
             </FormField>
 
             <FormField label="Imagem da capa" :error="form.errors.image">
