@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
+import PardaLogo from '@/Components/UI/PardaLogo.vue'
 import type { PageProps } from '@/types'
 
 const page = usePage<PageProps>()
@@ -16,11 +17,13 @@ const themeVars = computed(() => ({
 
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4" :style="themeVars">
-        <Link :href="route('home')" class="mb-8 flex flex-col items-center gap-2">
+        <Link :href="route('home')" class="mb-8 flex flex-col items-center gap-2"
+            :style="{ color: 'var(--color-primary)' }">
             <img v-if="settings.logo" :src="settings.logo" :alt="settings.company_name" class="h-10 w-auto" />
-            <span v-else class="text-2xl font-semibold tracking-tight" :style="{ color: 'var(--color-primary)' }">
-                {{ settings.company_name }}
-            </span>
+            <template v-else>
+                <PardaLogo class="h-12 w-auto" />
+                <span class="text-2xl font-semibold tracking-tight">{{ settings.company_name }}</span>
+            </template>
         </Link>
 
         <div class="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 p-8">

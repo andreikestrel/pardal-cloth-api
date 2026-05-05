@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
-// Note: blog menu items only render when blog_enabled is on in settings
 import { route } from 'ziggy-js'
+import PardaLogo from '@/Components/UI/PardaLogo.vue'
 import type { PageProps } from '@/types'
 
 const page = usePage<PageProps>()
@@ -56,9 +56,12 @@ const currentPath = computed(() => page.url)
         <!-- Sidebar -->
         <aside class="w-56 shrink-0 flex flex-col" :style="{ backgroundColor: 'var(--color-primary)' }">
             <div class="px-5 py-4 border-b border-white/10">
-                <Link :href="route('admin.dashboard')" class="flex items-center gap-2">
+                <Link :href="route('admin.dashboard')" class="flex items-center gap-2 text-white">
                     <img v-if="settings.logo" :src="settings.logo" :alt="settings.company_name" class="h-7 w-auto" />
-                    <span v-else class="text-white font-semibold text-base">{{ settings.company_name }}</span>
+                    <template v-else>
+                        <PardaLogo class="h-6 w-auto" />
+                        <span class="font-semibold text-base">{{ settings.company_name }}</span>
+                    </template>
                 </Link>
                 <p class="text-white/50 text-xs mt-0.5">Painel admin</p>
             </div>

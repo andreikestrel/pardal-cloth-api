@@ -4,6 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import { useCart } from '@/Composables/useCart'
 import CartDrawer from '@/Components/Shop/CartDrawer.vue'
+import PardaLogo from '@/Components/UI/PardaLogo.vue'
 import type { PageProps } from '@/types'
 
 const page = usePage<PageProps>()
@@ -34,12 +35,13 @@ const themeVars = computed(() => ({
         <header class="border-b border-gray-200 sticky top-0 bg-white z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
                 <!-- Logo / brand -->
-                <Link :href="route('home')" class="flex items-center gap-2 shrink-0">
-                    <img v-if="settings.logo" :src="settings.logo" :alt="settings.company_name"
-                        class="h-8 w-auto" />
-                    <span v-else class="text-xl font-semibold tracking-tight" :style="{ color: 'var(--color-primary)' }">
-                        {{ settings.company_name }}
-                    </span>
+                <Link :href="route('home')" class="flex items-center gap-2 shrink-0"
+                    :style="{ color: 'var(--color-primary)' }">
+                    <img v-if="settings.logo" :src="settings.logo" :alt="settings.company_name" class="h-8 w-auto" />
+                    <template v-else>
+                        <PardaLogo class="h-7 w-auto" />
+                        <span class="text-xl font-semibold tracking-tight">{{ settings.company_name }}</span>
+                    </template>
                 </Link>
 
                 <!-- Desktop nav -->
