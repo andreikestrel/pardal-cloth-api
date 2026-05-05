@@ -17,6 +17,11 @@ class ProductResource extends JsonResource
             'category'    => $this->whenLoaded('category'),
             'cover'       => $this->getFirstMediaUrl('cover'),
             'variations'  => ProductVariationResource::collection($this->whenLoaded('variations')),
+            'tags'        => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($t) => [
+                'id'    => $t->id,
+                'name'  => $t->name,
+                'color' => $t->color,
+            ])),
             'created_at'  => $this->created_at,
         ];
     }

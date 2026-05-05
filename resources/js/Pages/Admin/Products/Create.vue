@@ -6,7 +6,8 @@ import PageHeader from '@/Components/UI/PageHeader.vue'
 import ProductForm from '@/Components/Admin/ProductForm.vue'
 import type { Category } from '@/types'
 
-defineProps<{ categories: Category[] }>()
+interface Tag { id: number; name: string; color: string }
+defineProps<{ categories: Category[]; allTags: Tag[] }>()
 </script>
 
 <template>
@@ -23,6 +24,7 @@ defineProps<{ categories: Category[] }>()
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <ProductForm
                 :categories="categories"
+                :all-tags="allTags"
                 :submit-route="route('admin.products.store')"
                 method="post"
             >

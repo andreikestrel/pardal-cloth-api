@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Tag;
 use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -27,12 +28,13 @@ class ProductAdminController extends Controller
     {
         return Inertia::render('Admin/Products/Create', [
             'categories' => Category::all(),
+            'allTags'    => Tag::ordered()->get(['id', 'name', 'color']),
         ]);
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
-        $product = Product::create($request->safe()->except(['image', 'variations']));
+        $product = Product::create($request->safe()->except(['image', 'variations', 'tag_ids']));
 
         if ($request->hasFile('image')) {
             $product->addMediaFromRequest('image')->toMediaCollection('cover');
@@ -42,6 +44,8 @@ class ProductAdminController extends Controller
             $product->variations()->create($variation);
         }
 
+        $product->syncTagIds($request->validated('tag_ids', []));
+
         return redirect()->route('admin.products.index')
             ->with('success', 'Product created successfully.');
     }
@@ -49,19 +53,22 @@ class ProductAdminController extends Controller
     public function edit(Product $product): Response
     {
         return Inertia::render('Admin/Products/Edit', [
-            'product'    => new ProductResource($product->load(['category', 'media', 'variations'])),
+            'product'    => new ProductResource($product->load(['category', 'media', 'variations', 'tags'])),
             'categories' => Category::all(),
+            'allTags'    => Tag::ordered()->get(['id', 'name', 'color']),
         ]);
     }
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $product->update($request->safe()->except(['image', 'variations']));
+        $product->update($request->safe()->except(['image', 'variations', 'tag_ids']));
 
         if ($request->hasFile('image')) {
             $product->clearMediaCollection('cover');
             $product->addMediaFromRequest('image')->toMediaCollection('cover');
         }
+
+        $product->syncTagIds($request->validated('tag_ids', []));
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product updated successfully.');

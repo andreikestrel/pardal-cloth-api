@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -66,19 +67,25 @@ class ProductController extends Controller
             $query->whereHas('variations', fn ($q) => $q->whereIn('color', $colors));
         }
 
+        $tags = (array) $request->input('tags', []);
+        if (!empty($tags)) {
+            $query->whereHas('tags', fn ($q) => $q->whereIn('tags.id', $tags));
+        }
+
         $products = $query->paginate(24)->withQueryString();
 
         // Aggregate distinct sizes/colors so the filters drawer shows real options
         $facets = [
             'sizes'  => DB::table('product_variations')->whereNotNull('size')->distinct()->orderBy('size')->pluck('size'),
             'colors' => DB::table('product_variations')->whereNotNull('color')->distinct()->orderBy('color')->pluck('color'),
+            'tags'   => Tag::ordered()->get(['id', 'name', 'color']),
         ];
 
         return Inertia::render('Shop/Index', [
             'products'   => $products,
             'categories' => Category::all(),
             'facets'     => $facets,
-            'filters'    => $request->only(['q', 'categories', 'category', 'min_price', 'max_price', 'sizes', 'colors']),
+            'filters'    => $request->only(['q', 'categories', 'category', 'min_price', 'max_price', 'sizes', 'colors', 'tags']),
         ]);
     }
 

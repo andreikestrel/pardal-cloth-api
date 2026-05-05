@@ -8,8 +8,10 @@ import FormField from '@/Components/UI/FormField.vue'
 import PrimaryButton from '@/Components/UI/PrimaryButton.vue'
 import RichTextEditor from '@/Components/Admin/RichTextEditor.vue'
 import BlogPostBody from '@/Components/Shop/BlogPostBody.vue'
+import TagPicker from '@/Components/Admin/TagPicker.vue'
 
 interface BlogCategory { id: string; name: string; color: string }
+interface BlogTag { id: number; name: string; color: string }
 interface BlogPost {
     id: string
     title: string
@@ -19,11 +21,13 @@ interface BlogPost {
     published_at: string | null
     active: boolean
     cover_url: string | null
+    tags?: BlogTag[]
 }
 
 const props = defineProps<{
     post: BlogPost | null
     categories: BlogCategory[]
+    allTags: BlogTag[]
 }>()
 
 const isEdit = computed(() => !!props.post)
@@ -39,6 +43,7 @@ const form = useForm({
     published_at:     props.post?.published_at?.slice(0, 16) ?? '',
     active:           props.post?.active ?? true,
     cover:            null as File | null,
+    tag_ids:          (props.post?.tags ?? []).map(t => t.id) as number[],
 })
 
 const coverPreview = ref<string | null>(props.post?.cover_url ?? null)
@@ -196,6 +201,10 @@ function destroy() {
                                 <input v-model="form.published_at" type="datetime-local"
                                     class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" />
                                 <p class="text-xs text-gray-400 mt-1">Deixe em branco para guardar como rascunho.</p>
+                            </FormField>
+
+                            <FormField label="Tags" :error="form.errors.tag_ids">
+                                <TagPicker v-model="form.tag_ids" :tags="allTags" />
                             </FormField>
 
                             <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">

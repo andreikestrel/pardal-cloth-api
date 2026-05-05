@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BlogCategoryAdminController;
+use App\Http\Controllers\Admin\TagAdminController;
 use App\Http\Controllers\Admin\BlogPostAdminController;
 use App\Http\Controllers\Admin\CatalogAdminController;
 use App\Http\Controllers\Admin\CategoryAdminController;
@@ -90,6 +91,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/blog/categories',               [BlogCategoryAdminController::class, 'store'])->name('blog.categories.store');
     Route::put('/blog/categories/{category}',     [BlogCategoryAdminController::class, 'update'])->name('blog.categories.update');
     Route::delete('/blog/categories/{category}',  [BlogCategoryAdminController::class, 'destroy'])->name('blog.categories.destroy');
+
+    // Tags
+    Route::get('/tags',            [TagAdminController::class, 'index'])->name('tags.index');
+    Route::post('/tags',           [TagAdminController::class, 'store'])->name('tags.store');
+    Route::put('/tags/{tag}',      [TagAdminController::class, 'update'])->name('tags.update');
+    Route::delete('/tags/{tag}',   [TagAdminController::class, 'destroy'])->name('tags.destroy');
 
     // Users
     Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');

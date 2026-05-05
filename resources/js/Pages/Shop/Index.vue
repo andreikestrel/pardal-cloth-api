@@ -5,6 +5,8 @@ import { route } from 'ziggy-js'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import type { Product, Category } from '@/types'
 
+interface FacetTag { id: number; name: string; color: string }
+
 interface Filters {
     q?: string
     categories?: string[]
@@ -12,12 +14,13 @@ interface Filters {
     max_price?: string
     sizes?: string[]
     colors?: string[]
+    tags?: number[]
 }
 
 const props = defineProps<{
     products: { data: Product[]; links: unknown[]; meta?: { total?: number } }
     categories: Category[]
-    facets: { sizes: string[]; colors: string[] }
+    facets: { sizes: string[]; colors: string[]; tags: FacetTag[] }
     filters: Filters
 }>()
 
@@ -25,6 +28,7 @@ const q = ref(props.filters.q ?? '')
 const selectedCategories = ref<string[]>(props.filters.categories ?? [])
 const selectedSizes = ref<string[]>(props.filters.sizes ?? [])
 const selectedColors = ref<string[]>(props.filters.colors ?? [])
+const selectedTags = ref<number[]>((props.filters.tags ?? []).map(Number))
 const minPrice = ref(props.filters.min_price ?? '')
 const maxPrice = ref(props.filters.max_price ?? '')
 const showFilters = ref(false)
@@ -33,6 +37,7 @@ const activeFilterCount = computed(() =>
     selectedCategories.value.length
     + selectedSizes.value.length
     + selectedColors.value.length
+    + selectedTags.value.length
     + (minPrice.value ? 1 : 0)
     + (maxPrice.value ? 1 : 0)
 )
@@ -47,6 +52,7 @@ function applyFilters(immediate = false) {
             categories: selectedCategories.value.length ? selectedCategories.value : undefined,
             sizes:      selectedSizes.value.length ? selectedSizes.value : undefined,
             colors:     selectedColors.value.length ? selectedColors.value : undefined,
+            tags:       selectedTags.value.length ? selectedTags.value : undefined,
             min_price:  minPrice.value || undefined,
             max_price:  maxPrice.value || undefined,
         }, {
@@ -76,12 +82,19 @@ function toggleColor(c: string) {
     selectedColors.value = toggle(selectedColors.value, c)
     applyFilters(true)
 }
+function toggleTag(id: number) {
+    selectedTags.value = selectedTags.value.includes(id)
+        ? selectedTags.value.filter(x => x !== id)
+        : [...selectedTags.value, id]
+    applyFilters(true)
+}
 
 function clearAll() {
     q.value = ''
     selectedCategories.value = []
     selectedSizes.value = []
     selectedColors.value = []
+    selectedTags.value = []
     minPrice.value = ''
     maxPrice.value = ''
     applyFilters(true)
@@ -200,6 +213,19 @@ function lowestPrice(product: Product): string {
                                             ? 'bg-gray-900 text-white border-gray-900'
                                             : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500']">
                                     {{ c }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="facets.tags.length">
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">Tags</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <button v-for="tag in facets.tags" :key="tag.id" @click="toggleTag(tag.id)"
+                                    :style="selectedTags.includes(tag.id)
+                                        ? { backgroundColor: tag.color, borderColor: tag.color, color: '#fff' }
+                                        : { borderColor: tag.color + '88', color: tag.color }"
+                                    class="px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors bg-white hover:opacity-80">
+                                    {{ tag.name }}
                                 </button>
                             </div>
                         </div>

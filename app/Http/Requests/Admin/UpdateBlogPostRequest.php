@@ -16,6 +16,8 @@ class UpdateBlogPostRequest extends FormRequest
             'published_at'     => ['nullable', 'date'],
             'active'           => ['boolean'],
             'cover'            => ['nullable', 'image', 'max:6144'],
+            'tag_ids'          => ['nullable', 'array'],
+            'tag_ids.*'        => ['integer', 'exists:tags,id'],
         ];
     }
 }

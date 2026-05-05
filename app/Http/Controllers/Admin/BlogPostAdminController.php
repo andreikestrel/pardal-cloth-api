@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreBlogPostRequest;
 use App\Http\Requests\Admin\UpdateBlogPostRequest;
 use App\Models\BlogCategory;
 use App\Models\BlogPost;
+use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -31,6 +32,7 @@ class BlogPostAdminController extends Controller
         return Inertia::render('Admin/Blog/Posts/Form', [
             'post'       => null,
             'categories' => BlogCategory::orderBy('name')->get(),
+            'allTags'    => Tag::ordered()->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -41,11 +43,13 @@ class BlogPostAdminController extends Controller
         $data['author_id'] = $request->user()->id;
         $data['body_html'] = $this->sanitize($data['body_html']);
 
-        $post = BlogPost::create(collect($data)->except(['cover'])->toArray());
+        $post = BlogPost::create(collect($data)->except(['cover', 'tag_ids'])->toArray());
 
         if ($request->hasFile('cover')) {
             $post->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
+
+        $post->syncTagIds($request->validated('tag_ids', []));
 
         return redirect()->route('admin.blog.posts.edit', $post)
             ->with('success', 'Post salvo.');
@@ -53,11 +57,12 @@ class BlogPostAdminController extends Controller
 
     public function edit(BlogPost $post): Response
     {
-        $post->load(['category', 'author', 'media']);
+        $post->load(['category', 'author', 'media', 'tags']);
 
         return Inertia::render('Admin/Blog/Posts/Form', [
             'post'       => $post,
             'categories' => BlogCategory::orderBy('name')->get(),
+            'allTags'    => Tag::ordered()->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -72,12 +77,14 @@ class BlogPostAdminController extends Controller
             $data['body_html'] = $this->sanitize($data['body_html']);
         }
 
-        $post->update(collect($data)->except(['cover'])->toArray());
+        $post->update(collect($data)->except(['cover', 'tag_ids'])->toArray());
 
         if ($request->hasFile('cover')) {
             $post->clearMediaCollection('cover');
             $post->addMediaFromRequest('cover')->toMediaCollection('cover');
         }
+
+        $post->syncTagIds($request->validated('tag_ids', []));
 
         return back()->with('success', 'Post atualizado.');
     }

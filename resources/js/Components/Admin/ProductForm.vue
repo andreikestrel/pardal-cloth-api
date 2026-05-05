@@ -3,7 +3,10 @@ import { useForm } from '@inertiajs/vue3'
 import FormField from '@/Components/UI/FormField.vue'
 import PrimaryButton from '@/Components/UI/PrimaryButton.vue'
 import ProductVariationsEditor from '@/Components/Admin/ProductVariationsEditor.vue'
+import TagPicker from '@/Components/Admin/TagPicker.vue'
 import type { Category, Product } from '@/types'
+
+interface Tag { id: number; name: string; color: string }
 
 interface Variation {
     size: string; color: string; price: string; stock: number; min_stock: number; sku: string
@@ -11,6 +14,7 @@ interface Variation {
 
 const props = defineProps<{
     categories: Category[]
+    allTags: Tag[]
     product?: Product
     submitRoute: string
     method?: 'post' | 'put'
@@ -22,6 +26,7 @@ const form = useForm({
     description: props.product?.description ?? '',
     category_id: props.product?.category_id ?? '',
     image:       null as File | null,
+    tag_ids:     (props.product?.tags ?? []).map((t: Tag) => t.id) as number[],
     variations:  (props.product?.variations ?? []).map((v) => ({
         size: v.size, color: v.color, price: v.price, stock: v.stock, min_stock: v.min_stock, sku: v.sku,
     })) as Variation[],
@@ -81,6 +86,10 @@ function submit() {
         </FormField>
 
         <ProductVariationsEditor v-model="form.variations" />
+
+        <FormField label="Tags" :error="form.errors.tag_ids">
+            <TagPicker v-model="form.tag_ids" :tags="allTags" />
+        </FormField>
 
         <div class="flex justify-end gap-3 pt-2">
             <slot name="cancel" />

@@ -22,6 +22,9 @@ class StoreProductRequest extends FormRequest
             'variations.*.stock'          => ['required', 'integer', 'min:0'],
             'variations.*.sku'            => ['nullable', 'string', 'max:100'],
             'variations.*.barcode'        => ['nullable', 'string', 'max:100', 'distinct'],
+
+            'tag_ids'                     => ['nullable', 'array'],
+            'tag_ids.*'                   => ['integer', 'exists:tags,id'],
         ];
     }
 }
