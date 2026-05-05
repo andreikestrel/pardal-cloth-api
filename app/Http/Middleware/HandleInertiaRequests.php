@@ -32,13 +32,13 @@ class HandleInertiaRequests extends Middleware
             ],
             'settings' => fn () => cache()->remember('app_settings', 3600, function () {
                 $setting = Setting::first();
-                return $setting ? $setting->only(
+                return $setting ? array_merge($setting->only(
                     'company_name',
                     'primary_color',
                     'secondary_color',
                     'accent_color',
                     'logo',
-                ) : [];
+                ), ['blog_enabled' => (bool) $setting->blog_enabled]) : [];
             }),
         ];
     }

@@ -18,13 +18,15 @@ class Setting extends Model implements HasMedia
         'primary_color',
         'secondary_color',
         'accent_color',
+        'blog_enabled',
         'logo',
     ];
 
     protected function casts(): array
     {
         return [
-            'updated_at' => 'datetime',
+            'updated_at'   => 'datetime',
+            'blog_enabled' => 'boolean',
         ];
     }
 }

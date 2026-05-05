@@ -14,6 +14,7 @@ class UpdateGeneralSettingsRequest extends FormRequest
             'secondary_color'=> ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color'   => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'logo'           => ['nullable', 'image', 'max:2048'],
+            'blog_enabled'   => ['boolean'],
         ];
     }
 }

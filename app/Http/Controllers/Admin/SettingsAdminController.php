@@ -33,7 +33,7 @@ class SettingsAdminController extends Controller
         }
 
         // Bust the cached settings shared via HandleInertiaRequests
-        Cache::forget('app.settings');
+        Cache::forget('app_settings');
 
         return back()->with('success', 'Settings updated successfully.');
     }
