@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PromotionAdminController;
 use App\Http\Controllers\Admin\ReportAdminController;
 use App\Http\Controllers\Admin\SettingsAdminController;
 use App\Http\Controllers\Admin\StockAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -65,4 +66,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Reports
     Route::get('/reports', [ReportAdminController::class, 'index'])->name('reports.index');
+
+    // Users
+    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserAdminController::class, 'store'])->name('users.store');
+    Route::post('/users/{user}/resend', [UserAdminController::class, 'resend'])->name('users.resend');
+    Route::delete('/users/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
 });
