@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\BlogCategoryAdminController;
+use App\Http\Controllers\Admin\BlogPostAdminController;
 use App\Http\Controllers\Admin\CatalogAdminController;
 use App\Http\Controllers\Admin\CategoryAdminController;
 use App\Http\Controllers\Admin\CouponAdminController;
@@ -74,6 +76,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/catalog/slides/{slide}', [CatalogAdminController::class, 'updateSlide'])->name('catalog.slides.update');
     Route::delete('/catalog/slides/{slide}', [CatalogAdminController::class, 'destroySlide'])->name('catalog.slides.destroy');
     Route::post('/catalog/slides/reorder', [CatalogAdminController::class, 'reorderSlides'])->name('catalog.slides.reorder');
+
+    // Blog
+    Route::get('/blog/posts',                 [BlogPostAdminController::class, 'index'])->name('blog.posts.index');
+    Route::get('/blog/posts/create',          [BlogPostAdminController::class, 'create'])->name('blog.posts.create');
+    Route::post('/blog/posts',                [BlogPostAdminController::class, 'store'])->name('blog.posts.store');
+    Route::get('/blog/posts/{post}',          [BlogPostAdminController::class, 'edit'])->name('blog.posts.edit');
+    Route::post('/blog/posts/{post}',         [BlogPostAdminController::class, 'update'])->name('blog.posts.update');
+    Route::delete('/blog/posts/{post}',       [BlogPostAdminController::class, 'destroy'])->name('blog.posts.destroy');
+    Route::post('/blog/upload-image',         [BlogPostAdminController::class, 'uploadImage'])->name('blog.upload-image');
+
+    Route::get('/blog/categories',                [BlogCategoryAdminController::class, 'index'])->name('blog.categories.index');
+    Route::post('/blog/categories',               [BlogCategoryAdminController::class, 'store'])->name('blog.categories.store');
+    Route::put('/blog/categories/{category}',     [BlogCategoryAdminController::class, 'update'])->name('blog.categories.update');
+    Route::delete('/blog/categories/{category}',  [BlogCategoryAdminController::class, 'destroy'])->name('blog.categories.destroy');
 
     // Users
     Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');

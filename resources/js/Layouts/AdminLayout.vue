@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+// Note: blog menu items only render when blog_enabled is on in settings
 import { route } from 'ziggy-js'
 import type { PageProps } from '@/types'
 
@@ -14,18 +15,32 @@ const themeVars = computed(() => ({
     '--color-accent':    settings.value.accent_color    || '#f59e0b',
 }))
 
-const navItems = [
-    { label: 'Dashboard',  href: route('admin.dashboard') },
-    { label: 'Pedidos',    href: route('admin.orders.index') },
-    { label: 'Produtos',   href: route('admin.products.index') },
-    { label: 'Categorias', href: route('admin.categories.index') },
-    { label: 'Promoções',  href: route('admin.promotions.index') },
-    { label: 'Cupons',     href: route('admin.coupons.index') },
-    { label: 'Estoque',    href: route('admin.stock.index') },
-    { label: 'Catálogo',   href: route('admin.catalog.slides') },
-    { label: 'Relatórios', href: route('admin.reports.index') },
-    { label: 'Usuários',   href: route('admin.users.index') },
-]
+const navItems = computed(() => {
+    const items = [
+        { label: 'Dashboard',  href: route('admin.dashboard') },
+        { label: 'Pedidos',    href: route('admin.orders.index') },
+        { label: 'Produtos',   href: route('admin.products.index') },
+        { label: 'Categorias', href: route('admin.categories.index') },
+        { label: 'Promoções',  href: route('admin.promotions.index') },
+        { label: 'Cupons',     href: route('admin.coupons.index') },
+        { label: 'Estoque',    href: route('admin.stock.index') },
+        { label: 'Catálogo',   href: route('admin.catalog.slides') },
+    ]
+
+    if (settings.value?.blog_enabled) {
+        items.push(
+            { label: 'Blog',          href: route('admin.blog.posts.index') },
+            { label: 'Blog: temas',   href: route('admin.blog.categories.index') },
+        )
+    }
+
+    items.push(
+        { label: 'Relatórios', href: route('admin.reports.index') },
+        { label: 'Usuários',   href: route('admin.users.index') },
+    )
+
+    return items
+})
 
 const settingsItems = [
     { label: 'Geral',      href: route('admin.settings.general') },

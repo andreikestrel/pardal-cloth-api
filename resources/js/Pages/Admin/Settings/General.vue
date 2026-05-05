@@ -15,6 +15,7 @@ const form = useForm({
     primary_color:   props.settings.primary_color,
     secondary_color: props.settings.secondary_color,
     accent_color:    props.settings.accent_color,
+    blog_enabled:    !!(props.settings as Settings & { blog_enabled?: boolean }).blog_enabled,
     logo:            null as File | null,
 })
 
@@ -99,6 +100,17 @@ function submit() {
                             Destaque
                         </div>
                     </div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 space-y-3">
+                    <h2 class="font-medium text-gray-900 mb-2">Módulos</h2>
+                    <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+                        <input v-model="form.blog_enabled" type="checkbox" class="rounded" />
+                        <span>
+                            <strong>Blog</strong>
+                            <span class="text-gray-500 block text-xs">Quando ligado, /blog fica acessível e o link aparece no menu da loja.</span>
+                        </span>
+                    </label>
                 </div>
 
                 <div class="flex justify-end">
