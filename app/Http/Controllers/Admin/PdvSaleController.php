@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\FinalizePdvSaleRequest;
 use App\Models\CashSession;
 use App\Models\Order;
+use App\Models\ProductVariation;
 use App\Services\PdvService;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +16,10 @@ use Inertia\Response;
 
 class PdvSaleController extends Controller
 {
-    public function __construct(private readonly PdvService $pdvService) {}
+    public function __construct(
+        private readonly PdvService $pdvService,
+        private readonly StockService $stockService,
+    ) {}
 
     public function terminal(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
@@ -42,7 +47,8 @@ class PdvSaleController extends Controller
     {
         $q = (string) $request->get('q', '');
 
-        $results = $this->pdvService->searchProducts($q);
+        $stockOnly = $request->boolean('stock_only', true);
+        $results = $this->pdvService->searchProducts($q, $stockOnly);
 
         return response()->json($results);
     }
@@ -68,6 +74,25 @@ class PdvSaleController extends Controller
             'total'       => $order->total,
             'receipt_url' => route('admin.pdv.receipt', $order->id),
         ]);
+    }
+
+    public function stockEntry(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'items'                  => 'required|array|min:1',
+            'items.*.variation_id'   => 'required|exists:product_variations,id',
+            'items.*.quantity'       => 'required|integer|min:1',
+            'reason'                 => 'nullable|string|max:255',
+        ]);
+
+        $reason = $data['reason'] ?? 'PDV — entrada de estoque';
+
+        foreach ($data['items'] as $item) {
+            $variation = ProductVariation::findOrFail($item['variation_id']);
+            $this->stockService->adjust($variation, (int) $item['quantity'], $reason, $request->user());
+        }
+
+        return response()->json(['message' => 'Estoque atualizado com sucesso.']);
     }
 
     public function receipt(Request $request, Order $order): \Symfony\Component\HttpFoundation\Response

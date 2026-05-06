@@ -121,6 +121,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/terminal',                             [PdvSaleController::class, 'terminal'])->name('terminal');
         Route::get('/products',                             [PdvSaleController::class, 'products'])->name('products');
         Route::post('/finalize',                            [PdvSaleController::class, 'finalize'])->name('finalize');
+        Route::post('/stock-entry',                         [PdvSaleController::class, 'stockEntry'])->name('stock-entry');
         Route::get('/sales/{order}/receipt',                [PdvSaleController::class, 'receipt'])->name('receipt');
     });
 });

@@ -45,6 +45,15 @@ const companyName = computed(() => page.props.settings?.company_name || 'PDV')
 
 const showCloseConfirm = ref(false)
 
+// — Mode: 'sale' | 'entry' —
+const mode = ref<'sale' | 'entry'>('sale')
+
+function switchMode(m: 'sale' | 'entry') {
+    if (lines.value.length > 0 && !confirm('Trocar de modo vai limpar os itens. Continuar?')) return
+    lines.value = []
+    mode.value = m
+}
+
 // — Cart state —
 const lines          = ref<CartLine[]>([])
 const coupon         = ref('')
@@ -127,7 +136,8 @@ watch(searchQuery, (q) => {
 async function doSearch(q: string) {
     searching.value = true
     try {
-        const res = await fetch(route('admin.pdv.products') + '?q=' + encodeURIComponent(q), {
+        const params = new URLSearchParams({ q, stock_only: mode.value === 'sale' ? '1' : '0' })
+        const res = await fetch(route('admin.pdv.products') + '?' + params.toString(), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
         })
@@ -139,7 +149,7 @@ async function doSearch(q: string) {
 }
 
 function addVariation(product: ProductResult, variation: Variation) {
-    if (variation.stock <= 0) return
+    if (mode.value === 'sale' && variation.stock <= 0) return
     const existing = lines.value.find(l => l.variation_id === variation.id)
     if (existing) {
         if (existing.quantity < variation.stock) existing.quantity++
@@ -170,7 +180,7 @@ function setQty(variationId: string, qty: number) {
     const line = lines.value.find(l => l.variation_id === variationId)
     if (!line) return
     if (qty < 1) { removeLine(variationId); return }
-    if (qty > line.stock) return
+    if (mode.value === 'sale' && qty > line.stock) return
     line.quantity = qty
 }
 
@@ -277,6 +287,47 @@ function resetSale() {
 function cancelSale() {
     if (lines.value.length === 0 || confirm('Cancelar a venda atual?')) resetSale()
 }
+
+// — Stock entry —
+const entryReason  = ref('')
+const entryLoading = ref(false)
+const entrySuccess = ref(false)
+const entryError   = ref('')
+
+async function submitStockEntry() {
+    if (lines.value.length === 0) return
+    entryError.value = ''
+    entryLoading.value = true
+    entrySuccess.value = false
+    try {
+        const res = await fetch(route('admin.pdv.stock-entry'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                items:  lines.value.map(l => ({ variation_id: l.variation_id, quantity: l.quantity })),
+                reason: entryReason.value || undefined,
+            }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+            entryError.value = data.message ?? 'Erro ao registrar entrada.'
+            return
+        }
+        entrySuccess.value = true
+        lines.value = []
+        entryReason.value = ''
+    } catch {
+        entryError.value = 'Erro inesperado. Tente novamente.'
+    } finally {
+        entryLoading.value = false
+    }
+}
 </script>
 
 <template>
@@ -293,6 +344,18 @@ function cancelSale() {
                 </a>
                 <span class="text-gray-200">|</span>
                 <span class="text-sm font-semibold text-gray-800">{{ companyName }}</span>
+            </div>
+
+            <!-- Mode toggle -->
+            <div class="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-medium">
+                <button @click="switchMode('sale')"
+                    :class="['px-4 py-1.5 transition-colors', mode === 'sale' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50']">
+                    Venda
+                </button>
+                <button @click="switchMode('entry')"
+                    :class="['px-4 py-1.5 transition-colors border-l border-gray-200', mode === 'entry' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-50']">
+                    Entrada
+                </button>
             </div>
             <button @click="showCloseConfirm = true"
                 class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors">
@@ -334,13 +397,15 @@ function cancelSale() {
                                     <button
                                         v-for="v in product.variations" :key="v.id"
                                         @click="addVariation(product, v)"
-                                        :disabled="v.stock <= 0"
+                                        :disabled="mode === 'sale' && v.stock <= 0"
                                         :class="['flex flex-col items-start px-3 py-2 rounded-lg border text-xs transition-colors',
-                                            v.stock > 0
+                                            mode === 'entry' || v.stock > 0
                                                 ? 'border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer'
                                                 : 'border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed']">
                                         <span class="font-medium text-gray-800">{{ v.size }} / {{ v.color }}</span>
-                                        <span class="text-gray-500 mt-0.5">{{ fmt(String(v.price)) }} · {{ v.stock }} un.</span>
+                                        <span class="text-gray-500 mt-0.5">
+                                            {{ mode === 'sale' ? fmt(String(v.price)) + ' · ' : '' }}{{ v.stock }} un.
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -384,7 +449,9 @@ function cancelSale() {
                 <!-- Cart items -->
                 <div class="bg-white border border-gray-200 rounded-2xl">
                     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Itens da venda</p>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            {{ mode === 'entry' ? 'Itens para entrada' : 'Itens da venda' }}
+                        </p>
                         <span class="text-xs font-bold text-white rounded-full px-2 py-0.5"
                             style="background-color: var(--color-primary)">
                             {{ lines.length }} {{ lines.length === 1 ? 'item' : 'itens' }}
@@ -412,7 +479,7 @@ function cancelSale() {
                             <button @click="setQty(line.variation_id, line.quantity + 1)"
                                 class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-lg flex items-center justify-center transition-colors">+</button>
                         </div>
-                        <div class="text-right shrink-0 w-20">
+                        <div v-if="mode === 'sale'" class="text-right shrink-0 w-20">
                             <p class="text-sm font-semibold text-gray-900">{{ fmt(bcmul(line.unit_price, String(line.quantity))) }}</p>
                             <p class="text-xs text-gray-400">{{ fmt(line.unit_price) }} un.</p>
                         </div>
@@ -426,90 +493,135 @@ function cancelSale() {
                 </div>
             </div>
 
-            <!-- RIGHT — Coupon + summary + actions -->
+            <!-- RIGHT — mode-dependent panel -->
             <div class="w-80 shrink-0 flex flex-col gap-4">
 
-                <!-- Coupon -->
-                <div class="bg-white border border-gray-200 rounded-2xl p-4">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Cupom de desconto</p>
-                    <div v-if="couponApplied"
-                        class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
-                        <span class="text-sm font-medium text-green-700">{{ couponApplied }}</span>
-                        <button @click="removeCoupon" class="text-xs text-gray-400 hover:text-red-500">✕</button>
-                    </div>
-                    <div v-else class="flex gap-2">
-                        <input v-model="coupon" type="text" placeholder="CODIGO25"
-                            class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm uppercase placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            @keyup.enter="applyCoupon" />
-                        <button @click="applyCoupon"
-                            class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-medium text-gray-600 border border-gray-200 transition-colors">
-                            Aplicar
-                        </button>
-                    </div>
-                    <p v-if="couponError" class="text-xs text-red-500 mt-1.5">{{ couponError }}</p>
-                </div>
-
-                <!-- Summary -->
-                <div class="bg-white border border-gray-200 rounded-2xl p-4">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Resumo</p>
-
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between text-gray-500">
-                            <span>Subtotal</span>
-                            <span>{{ fmt(subtotal) }}</span>
+                <!-- SALE MODE: coupon + summary + actions -->
+                <template v-if="mode === 'sale'">
+                    <!-- Coupon -->
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Cupom de desconto</p>
+                        <div v-if="couponApplied"
+                            class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                            <span class="text-sm font-medium text-green-700">{{ couponApplied }}</span>
+                            <button @click="removeCoupon" class="text-xs text-gray-400 hover:text-red-500">✕</button>
                         </div>
-                        <div v-if="couponApplied" class="flex justify-between text-green-600">
-                            <span>Cupom {{ couponApplied }}</span>
-                            <span>−{{ fmt(couponDiscount) }}</span>
+                        <div v-else class="flex gap-2">
+                            <input v-model="coupon" type="text" placeholder="CODIGO25"
+                                class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm uppercase placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                @keyup.enter="applyCoupon" />
+                            <button @click="applyCoupon"
+                                class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-medium text-gray-600 border border-gray-200 transition-colors">
+                                Aplicar
+                            </button>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Desconto manual</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-gray-400 text-xs">R$</span>
-                                <input v-model="manualDiscount" type="number" min="0" step="0.01"
-                                    class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-300" />
+                        <p v-if="couponError" class="text-xs text-red-500 mt-1.5">{{ couponError }}</p>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Resumo</p>
+
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between text-gray-500">
+                                <span>Subtotal</span>
+                                <span>{{ fmt(subtotal) }}</span>
+                            </div>
+                            <div v-if="couponApplied" class="flex justify-between text-green-600">
+                                <span>Cupom {{ couponApplied }}</span>
+                                <span>−{{ fmt(couponDiscount) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500">Desconto manual</span>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-gray-400 text-xs">R$</span>
+                                    <input v-model="manualDiscount" type="number" min="0" step="0.01"
+                                        class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-300" />
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-gray-500">
+                                <span>Itens</span>
+                                <span>{{ lines.reduce((a, l) => a + l.quantity, 0) }}</span>
                             </div>
                         </div>
-                        <div class="flex justify-between text-gray-500">
-                            <span>Itens</span>
-                            <span>{{ lines.reduce((a, l) => a + l.quantity, 0) }}</span>
+
+                        <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between items-center">
+                            <span class="font-bold text-base text-gray-900">Total</span>
+                            <span class="font-bold text-xl text-gray-900">{{ fmt(total) }}</span>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between items-center">
-                        <span class="font-bold text-base text-gray-900">Total</span>
-                        <span class="font-bold text-xl text-gray-900">{{ fmt(total) }}</span>
+                    <!-- Actions -->
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button disabled
+                                class="flex items-center justify-center gap-1.5 border border-gray-200 rounded-xl py-2 text-xs text-gray-300 cursor-not-allowed">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                Salvar venda
+                            </button>
+                            <button @click="cancelSale"
+                                class="flex items-center justify-center gap-1.5 border border-gray-300 rounded-xl py-2 text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Cancelar
+                            </button>
+                        </div>
+                        <button @click="openPayment" :disabled="lines.length === 0"
+                            :class="['w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
+                                lines.length > 0 ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-300 cursor-not-allowed']"
+                            :style="lines.length > 0 ? { backgroundColor: 'var(--color-primary)' } : {}">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Finalizar compra
+                        </button>
                     </div>
-                </div>
+                </template>
 
-                <!-- Actions -->
-                <div class="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button disabled
-                            class="flex items-center justify-center gap-1.5 border border-gray-200 rounded-xl py-2 text-xs text-gray-300 cursor-not-allowed">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <!-- ENTRY MODE: reason + confirm -->
+                <template v-else>
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4 space-y-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Entrada de estoque</p>
+
+                        <div>
+                            <label class="text-xs font-medium text-gray-500 mb-1 block">Razão (opcional)</label>
+                            <input v-model="entryReason" type="text"
+                                placeholder="ex: Recebimento NF #123"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300" />
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-3 space-y-1.5 text-sm text-gray-500">
+                            <div class="flex justify-between">
+                                <span>Variações</span>
+                                <span>{{ lines.length }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total de unidades</span>
+                                <span class="font-semibold text-gray-900">{{ lines.reduce((a, l) => a + l.quantity, 0) }}</span>
+                            </div>
+                        </div>
+
+                        <div v-if="entrySuccess"
+                            class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-sm text-green-700">
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                             </svg>
-                            Salvar venda
-                        </button>
-                        <button @click="cancelSale"
-                            class="flex items-center justify-center gap-1.5 border border-gray-300 rounded-xl py-2 text-xs text-gray-600 hover:bg-gray-50 transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Cancelar
+                            Estoque atualizado com sucesso.
+                        </div>
+                        <p v-if="entryError" class="text-xs text-red-500">{{ entryError }}</p>
+
+                        <button @click="submitStockEntry" :disabled="lines.length === 0 || entryLoading"
+                            :class="['w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
+                                lines.length > 0 && !entryLoading ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-300 cursor-not-allowed']"
+                            :style="lines.length > 0 && !entryLoading ? { backgroundColor: 'var(--color-primary)' } : {}">
+                            <div v-if="entryLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            {{ entryLoading ? 'Registrando…' : 'Confirmar entrada' }}
                         </button>
                     </div>
-                    <button @click="openPayment" :disabled="lines.length === 0"
-                        :class="['w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
-                            lines.length > 0 ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-300 cursor-not-allowed']"
-                        :style="lines.length > 0 ? { backgroundColor: 'var(--color-primary)' } : {}">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Finalizar compra
-                    </button>
-                </div>
+                </template>
 
                 <!-- Session footer -->
                 <div class="text-xs text-gray-400 space-y-0.5 px-1">

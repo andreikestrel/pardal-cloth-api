@@ -25,7 +25,7 @@ class PdvService
      * Searches products by name (fulltext) or barcode for the PDV product picker.
      * Returns a flat list of matching variations with parent product info.
      */
-    public function searchProducts(string $query): Collection
+    public function searchProducts(string $query, bool $stockOnly = true): Collection
     {
         $query = trim($query);
 
@@ -36,7 +36,7 @@ class PdvService
         // Barcode lookup — exact match takes priority
         $byBarcode = ProductVariation::with('product')
             ->where('barcode', $query)
-            ->where('stock', '>', 0)
+            ->when($stockOnly, fn ($q) => $q->where('stock', '>', 0))
             ->get();
 
         if ($byBarcode->isNotEmpty()) {
