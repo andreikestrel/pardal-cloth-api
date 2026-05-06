@@ -14,6 +14,8 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'source',
+        'cash_session_id',
         'status',
         'subtotal',
         'discount_promotions',
@@ -22,6 +24,8 @@ class Order extends Model
         'total',
         'shipping_address',
         'notes',
+        'pdv_customer_name',
+        'pdv_customer_doc',
     ];
 
     protected function casts(): array
@@ -63,5 +67,10 @@ class Order extends Model
     public function couponUse(): HasOne
     {
         return $this->hasOne(CouponUse::class);
+    }
+
+    public function cashSession(): BelongsTo
+    {
+        return $this->belongsTo(CashSession::class);
     }
 }
