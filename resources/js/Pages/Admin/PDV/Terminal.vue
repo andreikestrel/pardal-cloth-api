@@ -42,6 +42,11 @@ const props = defineProps<{ session: Session }>()
 
 const page = usePage<PageProps>()
 const companyName = computed(() => page.props.settings?.company_name || 'PDV')
+const themeVars = computed(() => ({
+    '--color-primary':   page.props.settings?.primary_color   || '#111827',
+    '--color-secondary': page.props.settings?.secondary_color || '#6b7280',
+    '--color-accent':    page.props.settings?.accent_color    || '#f59e0b',
+}))
 
 const showCloseConfirm = ref(false)
 
@@ -331,7 +336,7 @@ async function submitStockEntry() {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 flex flex-col">
+    <div class="min-h-screen bg-gray-50 flex flex-col" :style="themeVars">
 
         <!-- Top bar -->
         <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
