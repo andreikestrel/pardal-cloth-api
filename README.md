@@ -116,9 +116,9 @@ The PHP server never holds long-lived connections. The WS service runs independe
 | ✅ | User invitations (24h email link, no temporary passwords) |
 | ✅ | Barcode scanner in product variations editor |
 | ✅ | Tagging system across products, posts and search |
-| 📋 | PDV (point-of-sale) — in-person sales terminal, manual payment, source-tagged orders |
-| 📋 | ERP-style modules — supplier directory, purchase orders, accounts payable, cash-flow reports |
-| 📋 | WebSocket service deployment scripts |
+| ✅ | PDV (point-of-sale) — in-person sales terminal, manual payment, source-tagged orders |
+| 🚧 | ERP-style modules — supplier directory, purchase orders, accounts payable, cash-flow reports |
+| 🚧 | WebSocket service deployment scripts |
 | 📋 | Mobile app (planned) |
 
 Legend: ✅ shipped · 🚧 in progress · 📋 planned
