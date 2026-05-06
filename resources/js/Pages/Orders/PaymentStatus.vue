@@ -3,10 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { useCart } from '@/Composables/useCart'
 import type { Order } from '@/types'
 
 const props = defineProps<{ order: Order }>()
 
+const { clearCart } = useCart()
 const payment = ref(props.order.payment)
 const polling = ref(true)
 let timer: ReturnType<typeof setInterval> | null = null
@@ -25,6 +27,7 @@ async function checkStatus() {
         if (payment.value?.status === 'approved') {
             polling.value = false
             clearInterval(timer!)
+            clearCart()
             setTimeout(() => router.visit(route('orders.show', props.order.id)), 1500)
         }
     } catch {
