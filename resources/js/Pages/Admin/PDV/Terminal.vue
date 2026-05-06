@@ -589,7 +589,16 @@ async function submitStockEntry() {
                 <!-- ENTRY MODE: reason + confirm -->
                 <template v-else>
                     <div class="bg-white border border-gray-200 rounded-2xl p-4 space-y-4">
-                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Entrada de estoque</p>
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Entrada de estoque</p>
+                            <a :href="route('admin.stock.index')" target="_blank"
+                                class="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                Ver estoque
+                            </a>
+                        </div>
 
                         <div>
                             <label class="text-xs font-medium text-gray-500 mb-1 block">Razão (opcional)</label>
