@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { route } from 'ziggy-js'
-import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 interface Session {
     id: string
@@ -274,25 +273,37 @@ function cancelSale() {
 </script>
 
 <template>
-    <AdminLayout>
-        <!-- Page header -->
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Terminal PDV</h1>
-                <p class="text-sm text-gray-500 mt-0.5">
+    <div class="min-h-screen bg-gray-50 flex flex-col">
+
+        <!-- Top bar -->
+        <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a :href="route('admin.pdv.index')"
+                    class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Voltar
+                </a>
+                <span class="text-gray-200">|</span>
+                <span class="text-sm font-semibold text-gray-800">Terminal PDV</span>
+            </div>
+            <div class="flex items-center gap-5">
+                <p class="text-sm text-gray-500">
                     Operador: <strong class="text-gray-700">{{ session.operator }}</strong>
                     &nbsp;·&nbsp;
                     Caixa: <strong class="text-gray-700">{{ session.register }}</strong>
                 </p>
+                <a :href="session.close_url"
+                    class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors">
+                    Fechar caixa
+                </a>
             </div>
-            <a :href="session.close_url"
-                class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-4 py-2 hover:bg-red-50 transition-colors">
-                Fechar caixa
-            </a>
         </div>
 
-        <!-- Two-column layout -->
-        <div class="flex gap-5 items-start">
+        <!-- Content -->
+        <div class="flex-1 p-6">
+        <div class="flex gap-5 items-start max-w-7xl mx-auto">
 
             <!-- LEFT — Product search + customer + cart -->
             <div class="flex flex-col flex-1 min-w-0 gap-4">
@@ -508,7 +519,8 @@ function cancelSale() {
                     <p>Caixa: <span class="font-medium text-gray-500">{{ session.register }}</span></p>
                 </div>
             </div>
-        </div>
+        </div><!-- /two-column -->
+        </div><!-- /content -->
 
         <!-- Payment modal -->
         <transition name="fade">
@@ -608,7 +620,7 @@ function cancelSale() {
                 </div>
             </div>
         </transition>
-    </AdminLayout>
+    </div>
 </template>
 
 <style scoped>
