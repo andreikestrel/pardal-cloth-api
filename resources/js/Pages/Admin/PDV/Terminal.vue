@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
-import type { PageProps } from '@/types'
+import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 interface Session {
     id: string
@@ -40,15 +39,10 @@ interface CartLine {
 
 const props = defineProps<{ session: Session }>()
 
-const page = usePage<PageProps>()
-const themeVars = computed(() => ({
-    '--color-primary': page.props.settings?.primary_color || '#111827',
-}))
-
 // — Cart state —
-const lines    = ref<CartLine[]>([])
-const coupon   = ref('')
-const couponApplied = ref<string | null>(null)
+const lines          = ref<CartLine[]>([])
+const coupon         = ref('')
+const couponApplied  = ref<string | null>(null)
 const couponDiscount = ref('0.00')
 const couponError    = ref('')
 const manualDiscount = ref('0.00')
@@ -65,24 +59,22 @@ const showDropdown  = ref(false)
 let searchTimer: ReturnType<typeof setTimeout>
 
 // — Payment modal —
-const showPayment  = ref(false)
-const payMethod    = ref<'pix' | 'credit_card' | 'cash'>('pix')
-const amountPaid   = ref('')
-const payLoading   = ref(false)
-const payError     = ref('')
-const receiptUrl   = ref<string | null>(null)
-const lastOrderId  = ref<string | null>(null)
+const showPayment = ref(false)
+const payMethod   = ref<'pix' | 'credit_card' | 'cash'>('pix')
+const amountPaid  = ref('')
+const payLoading  = ref(false)
+const payError    = ref('')
+const receiptUrl  = ref<string | null>(null)
+const lastOrderId = ref<string | null>(null)
 
 // — Computed totals —
-const subtotal = computed(() => {
-    return lines.value.reduce((acc, l) => {
-        return bcadd(acc, bcmul(l.unit_price, String(l.quantity)))
-    }, '0.00')
-})
+const subtotal = computed(() =>
+    lines.value.reduce((acc, l) => bcadd(acc, bcmul(l.unit_price, String(l.quantity))), '0.00')
+)
 
-const totalDiscount = computed(() => {
-    return bcadd(couponDiscount.value, manualDiscount.value || '0.00')
-})
+const totalDiscount = computed(() =>
+    bcadd(couponDiscount.value, manualDiscount.value || '0.00')
+)
 
 const total = computed(() => {
     const t = bcsub(subtotal.value, totalDiscount.value)
@@ -95,7 +87,7 @@ const changeDue = computed(() => {
     return parseFloat(change) >= 0 ? change : null
 })
 
-// Minimal fixed-point helpers (no backend for display-only totals)
+// Display-only fixed-point helpers (server always recalculates on finalize)
 function bcadd(a: string, b: string, scale = 2): string {
     return (parseFloat(a) + parseFloat(b)).toFixed(scale)
 }
@@ -112,7 +104,7 @@ function fmt(value: string): string {
 
 // — Product search —
 function blurSearch() {
-    // Delay hiding so clicks on dropdown items register before the blur closes it
+    // Delay hiding so clicks on dropdown chips register before blur closes the list
     setTimeout(() => { showDropdown.value = false }, 200)
 }
 
@@ -282,29 +274,31 @@ function cancelSale() {
 </script>
 
 <template>
-    <!-- Full-screen dark terminal — no admin sidebar -->
-    <div class="min-h-screen bg-gray-900 text-gray-100 flex flex-col" :style="themeVars">
-        <!-- Top bar -->
-        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-700 bg-gray-800">
-            <span class="text-sm font-semibold tracking-wide">PDV — Terminal</span>
-            <div class="flex items-center gap-4 text-xs text-gray-400">
-                <span>Operador: <strong class="text-gray-200">{{ session.operator }}</strong></span>
-                <span>Caixa: <strong class="text-gray-200">{{ session.register }}</strong></span>
-                <a :href="session.close_url"
-                    class="ml-2 text-red-400 hover:text-red-300 border border-red-800 rounded px-2 py-0.5 hover:border-red-600 transition-colors">
-                    Fechar caixa
-                </a>
+    <AdminLayout>
+        <!-- Page header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900">Terminal PDV</h1>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    Operador: <strong class="text-gray-700">{{ session.operator }}</strong>
+                    &nbsp;·&nbsp;
+                    Caixa: <strong class="text-gray-700">{{ session.register }}</strong>
+                </p>
             </div>
+            <a :href="session.close_url"
+                class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-4 py-2 hover:bg-red-50 transition-colors">
+                Fechar caixa
+            </a>
         </div>
 
-        <!-- Main area -->
-        <div class="flex flex-1 overflow-hidden">
+        <!-- Two-column layout -->
+        <div class="flex gap-5 items-start">
 
-            <!-- LEFT — Product search + items -->
-            <div class="flex flex-col flex-1 overflow-y-auto p-5 gap-4">
+            <!-- LEFT — Product search + customer + cart -->
+            <div class="flex flex-col flex-1 min-w-0 gap-4">
 
                 <!-- Product search -->
-                <div class="bg-gray-800 rounded-xl p-4">
+                <div class="bg-white border border-gray-200 rounded-2xl p-4">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Adicionar produto</p>
                     <div class="relative">
                         <input
@@ -313,18 +307,18 @@ function cancelSale() {
                             placeholder="Buscar por nome ou código de barras"
                             @focus="showDropdown = searchResults.length > 0"
                             @blur="blurSearch"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
                         />
                         <div v-if="searching" class="absolute right-3 top-1/2 -translate-y-1/2">
-                            <div class="w-4 h-4 border-2 border-gray-500 border-t-blue-400 rounded-full animate-spin"></div>
+                            <div class="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                         </div>
 
                         <!-- Search dropdown -->
                         <div v-if="showDropdown && searchResults.length"
-                            class="absolute z-20 top-full mt-1 w-full bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
-                            <div v-for="product in searchResults" :key="product.id" class="border-b border-gray-700 last:border-0">
-                                <div class="px-4 py-2 bg-gray-750">
-                                    <p class="text-sm font-medium text-gray-200">{{ product.name }}</p>
+                            class="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto">
+                            <div v-for="product in searchResults" :key="product.id" class="border-b border-gray-100 last:border-0">
+                                <div class="px-4 py-2 bg-gray-50">
+                                    <p class="text-sm font-medium text-gray-800">{{ product.name }}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2 p-3">
                                     <button
@@ -333,85 +327,87 @@ function cancelSale() {
                                         :disabled="v.stock <= 0"
                                         :class="['flex flex-col items-start px-3 py-2 rounded-lg border text-xs transition-colors',
                                             v.stock > 0
-                                                ? 'border-gray-600 hover:border-white/40 hover:bg-white/10 cursor-pointer'
-                                                : 'border-gray-700 opacity-40 cursor-not-allowed']">
-                                        <span class="font-medium">{{ v.size }} / {{ v.color }}</span>
-                                        <span class="text-gray-400 mt-0.5">{{ fmt(String(v.price)) }} · {{ v.stock }} un.</span>
+                                                ? 'border-gray-200 hover:border-gray-400 hover:bg-gray-50 cursor-pointer'
+                                                : 'border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed']">
+                                        <span class="font-medium text-gray-800">{{ v.size }} / {{ v.color }}</span>
+                                        <span class="text-gray-500 mt-0.5">{{ fmt(String(v.price)) }} · {{ v.stock }} un.</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         <div v-else-if="showDropdown && !searching"
-                            class="absolute z-20 top-full mt-1 w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-sm text-gray-500 text-center shadow-xl">
+                            class="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-400 text-center shadow-xl">
                             Nenhum produto encontrado.
                         </div>
                     </div>
                 </div>
 
                 <!-- Customer (collapsible) -->
-                <div class="bg-gray-800 rounded-xl overflow-hidden">
+                <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                     <button @click="showCustomer = !showCustomer"
-                        class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:text-white transition-colors">
+                        class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                         <span class="flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
-                            Dados do cliente <span class="text-gray-500 ml-1">(opcional)</span>
+                            Dados do cliente
+                            <span class="text-gray-400">(opcional)</span>
                         </span>
-                        <svg :class="['w-4 h-4 transition-transform', showCustomer ? 'rotate-180' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg :class="['w-4 h-4 transition-transform text-gray-400', showCustomer ? 'rotate-180' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div v-if="showCustomer" class="px-4 pb-4 grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs text-gray-400 mb-1 block">Nome</label>
+                    <div v-if="showCustomer" class="px-4 pb-4 grid grid-cols-2 gap-3 border-t border-gray-100">
+                        <div class="pt-3">
+                            <label class="text-xs font-medium text-gray-500 mb-1 block">Nome</label>
                             <input v-model="customerName" type="text" placeholder="Nome do cliente"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30" />
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300" />
                         </div>
-                        <div>
-                            <label class="text-xs text-gray-400 mb-1 block">CPF</label>
+                        <div class="pt-3">
+                            <label class="text-xs font-medium text-gray-500 mb-1 block">CPF</label>
                             <input v-model="customerDoc" type="text" placeholder="000.000.000-00"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30" />
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300" />
                         </div>
                     </div>
                 </div>
 
                 <!-- Cart items -->
-                <div class="bg-gray-800 rounded-xl flex-1">
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+                <div class="bg-white border border-gray-200 rounded-2xl">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Itens da venda</p>
-                        <span class="text-xs font-bold text-white rounded-full px-2 py-0.5" style="background-color: var(--color-primary)">
+                        <span class="text-xs font-bold text-white rounded-full px-2 py-0.5"
+                            style="background-color: var(--color-primary)">
                             {{ lines.length }} {{ lines.length === 1 ? 'item' : 'itens' }}
                         </span>
                     </div>
 
-                    <div v-if="lines.length === 0" class="flex flex-col items-center justify-center py-16 text-gray-600">
-                        <svg class="w-12 h-12 mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div v-if="lines.length === 0"
+                        class="flex flex-col items-center justify-center py-14 text-gray-300">
+                        <svg class="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
-                        <p class="text-sm">Nenhum item adicionado</p>
+                        <p class="text-sm text-gray-400">Nenhum item adicionado</p>
                     </div>
 
                     <div v-for="line in lines" :key="line.variation_id"
-                        class="flex items-center gap-4 px-4 py-3 border-b border-gray-700 last:border-0">
+                        class="flex items-center gap-4 px-4 py-3 border-b border-gray-100 last:border-0">
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium truncate">{{ line.product_name }}</p>
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ line.product_name }}</p>
                             <p class="text-xs text-gray-400 mt-0.5">{{ line.size }} · {{ line.color }}</p>
                         </div>
-                        <!-- Qty stepper -->
                         <div class="flex items-center gap-2 shrink-0">
                             <button @click="setQty(line.variation_id, line.quantity - 1)"
-                                class="w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-600 text-lg flex items-center justify-center">−</button>
-                            <span class="w-6 text-center text-sm font-medium">{{ line.quantity }}</span>
+                                class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-lg flex items-center justify-center transition-colors">−</button>
+                            <span class="w-6 text-center text-sm font-medium text-gray-900">{{ line.quantity }}</span>
                             <button @click="setQty(line.variation_id, line.quantity + 1)"
-                                class="w-7 h-7 rounded-full bg-gray-700 hover:bg-gray-600 text-lg flex items-center justify-center">+</button>
+                                class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-lg flex items-center justify-center transition-colors">+</button>
                         </div>
                         <div class="text-right shrink-0 w-20">
-                            <p class="text-sm font-semibold">{{ fmt(bcmul(line.unit_price, String(line.quantity))) }}</p>
-                            <p class="text-xs text-gray-500">{{ fmt(line.unit_price) }} un.</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ fmt(bcmul(line.unit_price, String(line.quantity))) }}</p>
+                            <p class="text-xs text-gray-400">{{ fmt(line.unit_price) }} un.</p>
                         </div>
                         <button @click="removeLine(line.variation_id)"
-                            class="text-gray-600 hover:text-red-400 transition-colors ml-1">
+                            class="text-gray-300 hover:text-red-500 transition-colors ml-1 shrink-0">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -420,86 +416,93 @@ function cancelSale() {
                 </div>
             </div>
 
-            <!-- RIGHT — Summary + actions -->
-            <div class="w-80 shrink-0 flex flex-col gap-4 p-5 border-l border-gray-700 overflow-y-auto">
+            <!-- RIGHT — Coupon + summary + actions -->
+            <div class="w-80 shrink-0 flex flex-col gap-4">
 
                 <!-- Coupon -->
-                <div class="bg-gray-800 rounded-xl p-4">
+                <div class="bg-white border border-gray-200 rounded-2xl p-4">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Cupom de desconto</p>
-                    <div v-if="couponApplied" class="flex items-center justify-between bg-green-900/30 border border-green-700 rounded-lg px-3 py-2">
-                        <span class="text-sm font-medium text-green-400">{{ couponApplied }}</span>
-                        <button @click="removeCoupon" class="text-xs text-gray-500 hover:text-red-400">✕</button>
+                    <div v-if="couponApplied"
+                        class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                        <span class="text-sm font-medium text-green-700">{{ couponApplied }}</span>
+                        <button @click="removeCoupon" class="text-xs text-gray-400 hover:text-red-500">✕</button>
                     </div>
                     <div v-else class="flex gap-2">
                         <input v-model="coupon" type="text" placeholder="CODIGO25"
-                            class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm uppercase placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm uppercase placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
                             @keyup.enter="applyCoupon" />
                         <button @click="applyCoupon"
-                            class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-medium border border-gray-600 transition-colors">
+                            class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-medium text-gray-600 border border-gray-200 transition-colors">
                             Aplicar
                         </button>
                     </div>
-                    <p v-if="couponError" class="text-xs text-red-400 mt-1">{{ couponError }}</p>
+                    <p v-if="couponError" class="text-xs text-red-500 mt-1.5">{{ couponError }}</p>
                 </div>
 
                 <!-- Summary -->
-                <div class="bg-gray-800 rounded-xl p-4 flex-1">
+                <div class="bg-white border border-gray-200 rounded-2xl p-4">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Resumo</p>
 
                     <div class="space-y-3 text-sm">
-                        <div class="flex justify-between text-gray-400">
+                        <div class="flex justify-between text-gray-500">
                             <span>Subtotal</span>
                             <span>{{ fmt(subtotal) }}</span>
                         </div>
-                        <div v-if="couponApplied" class="flex justify-between text-green-400">
+                        <div v-if="couponApplied" class="flex justify-between text-green-600">
                             <span>Cupom {{ couponApplied }}</span>
                             <span>−{{ fmt(couponDiscount) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-400">Desconto manual</span>
+                            <span class="text-gray-500">Desconto manual</span>
                             <div class="flex items-center gap-1">
-                                <span class="text-gray-500 text-xs">R$</span>
+                                <span class="text-gray-400 text-xs">R$</span>
                                 <input v-model="manualDiscount" type="number" min="0" step="0.01"
-                                    class="w-20 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                    class="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-300" />
                             </div>
                         </div>
-                        <div class="flex justify-between text-gray-400">
+                        <div class="flex justify-between text-gray-500">
                             <span>Itens</span>
                             <span>{{ lines.reduce((a, l) => a + l.quantity, 0) }}</span>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-700 mt-4 pt-4 flex justify-between items-center">
-                        <span class="font-bold text-base">Total</span>
-                        <span class="font-bold text-xl text-white">{{ fmt(total) }}</span>
+                    <div class="border-t border-gray-100 mt-4 pt-4 flex justify-between items-center">
+                        <span class="font-bold text-base text-gray-900">Total</span>
+                        <span class="font-bold text-xl text-gray-900">{{ fmt(total) }}</span>
                     </div>
                 </div>
 
                 <!-- Actions -->
-                <div class="bg-gray-800 rounded-xl p-4 space-y-2">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Ações</p>
+                <div class="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button disabled class="flex items-center justify-center gap-1.5 border border-gray-600 rounded-lg py-2 text-xs text-gray-400 opacity-50 cursor-not-allowed">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <button disabled
+                            class="flex items-center justify-center gap-1.5 border border-gray-200 rounded-xl py-2 text-xs text-gray-300 cursor-not-allowed">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            </svg>
                             Salvar venda
                         </button>
                         <button @click="cancelSale"
-                            class="flex items-center justify-center gap-1.5 border border-gray-600 rounded-lg py-2 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            class="flex items-center justify-center gap-1.5 border border-gray-300 rounded-xl py-2 text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                             Cancelar
                         </button>
                     </div>
                     <button @click="openPayment" :disabled="lines.length === 0"
                         :class="['w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
-                            lines.length > 0 ? 'text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed']"
+                            lines.length > 0 ? 'text-white hover:opacity-90' : 'bg-gray-100 text-gray-300 cursor-not-allowed']"
                         :style="lines.length > 0 ? { backgroundColor: 'var(--color-primary)' } : {}">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
                         Finalizar compra
                     </button>
                 </div>
 
-                <!-- Session info footer -->
-                <div class="text-xs text-gray-600 space-y-0.5 px-1">
+                <!-- Session footer -->
+                <div class="text-xs text-gray-400 space-y-0.5 px-1">
                     <p>Venda <span class="font-medium text-gray-500">#{{ saleCounter }}</span></p>
                     <p>Operador: <span class="font-medium text-gray-500">{{ session.operator }}</span></p>
                     <p>Caixa: <span class="font-medium text-gray-500">{{ session.register }}</span></p>
@@ -510,26 +513,27 @@ function cancelSale() {
         <!-- Payment modal -->
         <transition name="fade">
             <div v-if="showPayment" class="fixed inset-0 z-50 flex items-center justify-center">
-                <div class="absolute inset-0 bg-black/60" @click="!payLoading && !receiptUrl && (showPayment = false)"></div>
-                <div class="relative bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+                <div class="absolute inset-0 bg-black/40"
+                    @click="!payLoading && !receiptUrl && (showPayment = false)"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
 
                     <!-- Success state -->
                     <div v-if="receiptUrl" class="text-center">
-                        <div class="w-14 h-14 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-white mb-1">Venda finalizada!</h3>
-                        <p class="text-sm text-gray-400 mb-6">Pagamento confirmado.</p>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">Venda finalizada!</h3>
+                        <p class="text-sm text-gray-500 mb-6">Pagamento confirmado.</p>
                         <div class="flex gap-3">
                             <a :href="receiptUrl" target="_blank"
-                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 text-center hover:opacity-90"
+                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 text-center hover:opacity-90 transition-opacity"
                                 style="background-color: var(--color-primary)">
                                 Imprimir recibo
                             </a>
                             <button @click="showPayment = false"
-                                class="flex-1 border border-gray-600 hover:bg-gray-700 text-gray-300 text-sm rounded-xl py-2.5 transition-colors">
+                                class="flex-1 border border-gray-300 text-gray-600 text-sm rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
                                 Nova venda
                             </button>
                         </div>
@@ -537,59 +541,64 @@ function cancelSale() {
 
                     <!-- Payment form -->
                     <template v-else>
-                        <h3 class="font-semibold text-white mb-1">Forma de pagamento</h3>
-                        <p class="text-sm text-gray-400 mb-5">Total: <strong class="text-white text-base">{{ fmt(total) }}</strong></p>
+                        <h3 class="font-semibold text-gray-900 mb-1">Forma de pagamento</h3>
+                        <p class="text-sm text-gray-500 mb-5">
+                            Total: <strong class="text-gray-900 text-base">{{ fmt(total) }}</strong>
+                        </p>
 
                         <!-- Method selector -->
                         <div class="flex gap-2 mb-5">
-                            <button v-for="m in [{ value: 'pix', label: 'Pix' }, { value: 'credit_card', label: 'Cartão' }, { value: 'cash', label: 'Dinheiro' }]"
+                            <button
+                                v-for="m in [{ value: 'pix', label: 'Pix' }, { value: 'credit_card', label: 'Cartão' }, { value: 'cash', label: 'Dinheiro' }]"
                                 :key="m.value"
                                 @click="payMethod = m.value as any"
                                 :class="['flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors',
                                     payMethod === m.value
                                         ? 'border-transparent text-white'
-                                        : 'border-gray-600 text-gray-400 hover:border-gray-500']"
+                                        : 'border-gray-300 text-gray-500 hover:border-gray-400']"
                                 :style="payMethod === m.value ? { backgroundColor: 'var(--color-primary)' } : {}">
                                 {{ m.label }}
                             </button>
                         </div>
 
                         <!-- Pix placeholder -->
-                        <div v-if="payMethod === 'pix'" class="bg-gray-900 rounded-xl p-5 text-center mb-5">
-                            <div class="w-32 h-32 bg-white rounded-lg mx-auto mb-3 flex items-center justify-center">
-                                <span class="text-gray-400 text-xs">QR Code</span>
+                        <div v-if="payMethod === 'pix'"
+                            class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-center mb-5">
+                            <div class="w-32 h-32 bg-white border border-gray-200 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                <span class="text-gray-300 text-xs">QR Code</span>
                             </div>
-                            <p class="text-xs text-gray-500">QR Code gerado pelo gateway será exibido aqui</p>
+                            <p class="text-xs text-gray-400">QR Code gerado pelo gateway será exibido aqui</p>
                         </div>
 
                         <!-- Card placeholder -->
-                        <div v-else-if="payMethod === 'credit_card'" class="bg-gray-900 rounded-xl p-5 text-center mb-5">
-                            <svg class="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div v-else-if="payMethod === 'credit_card'"
+                            class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-center mb-5">
+                            <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
-                            <p class="text-sm text-gray-400">Passe o cartão na maquininha e confirme.</p>
+                            <p class="text-sm text-gray-500">Passe o cartão na maquininha e confirme.</p>
                         </div>
 
                         <!-- Cash -->
-                        <div v-else class="bg-gray-900 rounded-xl p-4 mb-5">
-                            <label class="text-xs text-gray-400 mb-1 block">Valor recebido (R$)</label>
+                        <div v-else class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5">
+                            <label class="text-xs font-medium text-gray-500 mb-1 block">Valor recebido (R$)</label>
                             <input v-model="amountPaid" type="number" min="0" step="0.01"
-                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/30" />
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
                             <div v-if="changeDue !== null" class="mt-3 flex justify-between text-sm">
-                                <span class="text-gray-400">Troco</span>
-                                <span class="font-semibold text-green-400">{{ fmt(changeDue) }}</span>
+                                <span class="text-gray-500">Troco</span>
+                                <span class="font-semibold text-green-600">{{ fmt(changeDue) }}</span>
                             </div>
                         </div>
 
-                        <p v-if="payError" class="text-xs text-red-400 mb-3">{{ payError }}</p>
+                        <p v-if="payError" class="text-xs text-red-500 mb-3">{{ payError }}</p>
 
                         <div class="flex gap-3">
                             <button @click="showPayment = false" :disabled="payLoading"
-                                class="flex-1 border border-gray-600 text-gray-300 text-sm rounded-xl py-2.5 hover:bg-gray-700 transition-colors">
+                                class="flex-1 border border-gray-300 text-gray-600 text-sm rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
                                 Cancelar
                             </button>
                             <button @click="confirmPayment" :disabled="payLoading"
-                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 transition-colors flex items-center justify-center gap-2 hover:opacity-90"
+                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
                                 style="background-color: var(--color-primary)">
                                 <div v-if="payLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 {{ payLoading ? 'Processando…' : 'Confirmar pagamento' }}
@@ -599,7 +608,7 @@ function cancelSale() {
                 </div>
             </div>
         </transition>
-    </div>
+    </AdminLayout>
 </template>
 
 <style scoped>
