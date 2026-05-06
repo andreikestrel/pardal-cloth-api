@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
+import type { PageProps } from '@/types'
 
 interface Session {
     id: string
@@ -37,6 +39,11 @@ interface CartLine {
 }
 
 const props = defineProps<{ session: Session }>()
+
+const page = usePage<PageProps>()
+const themeVars = computed(() => ({
+    '--color-primary': page.props.settings?.primary_color || '#111827',
+}))
 
 // — Cart state —
 const lines    = ref<CartLine[]>([])
@@ -104,6 +111,11 @@ function fmt(value: string): string {
 }
 
 // — Product search —
+function blurSearch() {
+    // Delay hiding so clicks on dropdown items register before the blur closes it
+    setTimeout(() => { showDropdown.value = false }, 200)
+}
+
 watch(searchQuery, (q) => {
     clearTimeout(searchTimer)
     if (!q.trim()) {
@@ -271,7 +283,7 @@ function cancelSale() {
 
 <template>
     <!-- Full-screen dark terminal — no admin sidebar -->
-    <div class="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+    <div class="min-h-screen bg-gray-900 text-gray-100 flex flex-col" :style="themeVars">
         <!-- Top bar -->
         <div class="flex items-center justify-between px-5 py-3 border-b border-gray-700 bg-gray-800">
             <span class="text-sm font-semibold tracking-wide">PDV — Terminal</span>
@@ -300,8 +312,8 @@ function cancelSale() {
                             type="text"
                             placeholder="Buscar por nome ou código de barras"
                             @focus="showDropdown = searchResults.length > 0"
-                            @blur="setTimeout(() => showDropdown = false, 200)"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            @blur="blurSearch"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent"
                         />
                         <div v-if="searching" class="absolute right-3 top-1/2 -translate-y-1/2">
                             <div class="w-4 h-4 border-2 border-gray-500 border-t-blue-400 rounded-full animate-spin"></div>
@@ -321,7 +333,7 @@ function cancelSale() {
                                         :disabled="v.stock <= 0"
                                         :class="['flex flex-col items-start px-3 py-2 rounded-lg border text-xs transition-colors',
                                             v.stock > 0
-                                                ? 'border-gray-600 hover:border-blue-500 hover:bg-blue-500/10 cursor-pointer'
+                                                ? 'border-gray-600 hover:border-white/40 hover:bg-white/10 cursor-pointer'
                                                 : 'border-gray-700 opacity-40 cursor-not-allowed']">
                                         <span class="font-medium">{{ v.size }} / {{ v.color }}</span>
                                         <span class="text-gray-400 mt-0.5">{{ fmt(String(v.price)) }} · {{ v.stock }} un.</span>
@@ -354,12 +366,12 @@ function cancelSale() {
                         <div>
                             <label class="text-xs text-gray-400 mb-1 block">Nome</label>
                             <input v-model="customerName" type="text" placeholder="Nome do cliente"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30" />
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 mb-1 block">CPF</label>
                             <input v-model="customerDoc" type="text" placeholder="000.000.000-00"
-                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/30" />
                         </div>
                     </div>
                 </div>
@@ -368,7 +380,7 @@ function cancelSale() {
                 <div class="bg-gray-800 rounded-xl flex-1">
                     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">
                         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Itens da venda</p>
-                        <span class="text-xs font-bold bg-blue-600 text-white rounded-full px-2 py-0.5">
+                        <span class="text-xs font-bold text-white rounded-full px-2 py-0.5" style="background-color: var(--color-primary)">
                             {{ lines.length }} {{ lines.length === 1 ? 'item' : 'itens' }}
                         </span>
                     </div>
@@ -479,7 +491,8 @@ function cancelSale() {
                     </div>
                     <button @click="openPayment" :disabled="lines.length === 0"
                         :class="['w-full py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2',
-                            lines.length > 0 ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed']">
+                            lines.length > 0 ? 'text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed']"
+                        :style="lines.length > 0 ? { backgroundColor: 'var(--color-primary)' } : {}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                         Finalizar compra
                     </button>
@@ -511,7 +524,8 @@ function cancelSale() {
                         <p class="text-sm text-gray-400 mb-6">Pagamento confirmado.</p>
                         <div class="flex gap-3">
                             <a :href="receiptUrl" target="_blank"
-                                class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl py-2.5 text-center transition-colors">
+                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 text-center hover:opacity-90"
+                                style="background-color: var(--color-primary)">
                                 Imprimir recibo
                             </a>
                             <button @click="showPayment = false"
@@ -533,8 +547,9 @@ function cancelSale() {
                                 @click="payMethod = m.value as any"
                                 :class="['flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors',
                                     payMethod === m.value
-                                        ? 'bg-blue-600 border-blue-600 text-white'
-                                        : 'border-gray-600 text-gray-400 hover:border-gray-500']">
+                                        ? 'border-transparent text-white'
+                                        : 'border-gray-600 text-gray-400 hover:border-gray-500']"
+                                :style="payMethod === m.value ? { backgroundColor: 'var(--color-primary)' } : {}">
                                 {{ m.label }}
                             </button>
                         </div>
@@ -559,7 +574,7 @@ function cancelSale() {
                         <div v-else class="bg-gray-900 rounded-xl p-4 mb-5">
                             <label class="text-xs text-gray-400 mb-1 block">Valor recebido (R$)</label>
                             <input v-model="amountPaid" type="number" min="0" step="0.01"
-                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/30" />
                             <div v-if="changeDue !== null" class="mt-3 flex justify-between text-sm">
                                 <span class="text-gray-400">Troco</span>
                                 <span class="font-semibold text-green-400">{{ fmt(changeDue) }}</span>
@@ -574,7 +589,8 @@ function cancelSale() {
                                 Cancelar
                             </button>
                             <button @click="confirmPayment" :disabled="payLoading"
-                                class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl py-2.5 transition-colors flex items-center justify-center gap-2">
+                                class="flex-1 text-white text-sm font-medium rounded-xl py-2.5 transition-colors flex items-center justify-center gap-2 hover:opacity-90"
+                                style="background-color: var(--color-primary)">
                                 <div v-if="payLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 {{ payLoading ? 'Processando…' : 'Confirmar pagamento' }}
                             </button>

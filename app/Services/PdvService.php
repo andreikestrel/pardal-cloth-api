@@ -44,8 +44,9 @@ class PdvService
         }
 
         // Fulltext search on products, then load their variations
+        // FULLTEXT index covers (name, description) — both columns must be listed in MATCH
         $productIds = DB::table('products')
-            ->whereRaw('MATCH(name) AGAINST(? IN BOOLEAN MODE)', [$query . '*'])
+            ->whereRaw('MATCH(name, description) AGAINST(? IN BOOLEAN MODE)', [$query . '*'])
             ->where('active', true)
             ->pluck('id');
 
@@ -174,8 +175,6 @@ class PdvService
             }
 
             // Record payment as approved immediately (no gateway for PDV)
-            $amountPaid = $data['amount_paid'] ?? $total;
-
             Payment::create([
                 'order_id'           => $order->id,
                 'gateway'            => 'manual',
