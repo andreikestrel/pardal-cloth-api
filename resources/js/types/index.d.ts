@@ -49,8 +49,12 @@ export interface Product {
 export interface CartLineItem {
     variation_id: string
     quantity: number
-    variation?: ProductVariation
-    product?: Pick<Product, 'id' | 'name' | 'slug'>
+    product_name?: string | null
+    unit_price?: string | null
+    size?: string | null
+    color?: string | null
+    discount?: string | null
+    subtotal?: string | null
 }
 
 export interface PromotionApplied {

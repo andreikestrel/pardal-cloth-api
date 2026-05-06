@@ -62,13 +62,13 @@ function formatBRL(value: string | number): string {
 
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">
-                                    {{ line.product?.name ?? 'Produto' }}
+                                    {{ line.product_name ?? 'Produto' }}
                                 </p>
                                 <p class="text-xs text-gray-500 mt-0.5">
-                                    {{ line.variation?.size }} · {{ line.variation?.color }}
+                                    {{ line.size }} · {{ line.color }}
                                 </p>
                                 <p class="text-sm font-semibold text-gray-900 mt-1">
-                                    {{ formatBRL(line.variation?.price ?? '0') }}
+                                    {{ formatBRL(line.unit_price ?? '0') }}
                                 </p>
 
                                 <div class="flex items-center gap-2 mt-2">

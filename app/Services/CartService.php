@@ -64,13 +64,15 @@ class CartService
             $subtotal  = bcsub($lineTotal, $item['discount'], 2);
 
             return new CartItemData(
-                variationId:  $item['variation']->id,
-                quantity:     $item['quantity'],
-                productName:  $item['variation']->product->name,
-                sku:          $item['variation']->sku,
-                unitPrice:    $item['unit_price'],
-                discount:     $item['discount'],
-                subtotal:     $subtotal,
+                variation_id:     $item['variation']->id,
+                quantity:         $item['quantity'],
+                product_name:     $item['variation']->product->name,
+                sku:              $item['variation']->sku,
+                unit_price:       $item['unit_price'],
+                size:             $item['variation']->size,
+                color:            $item['variation']->color,
+                discount:         $item['discount'],
+                subtotal:         $subtotal,
             );
         }, $result['items']);
 
