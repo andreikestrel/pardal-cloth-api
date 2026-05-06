@@ -23,14 +23,11 @@ class BlogController extends Controller
             ->take(3)
             ->get();
 
-        $featuredIds = $featured->pluck('id')->all();
-
         $posts = BlogPost::published()
             ->with(['category:id,name,slug,color', 'author:id,name', 'media'])
             ->when($request->filled('category'), fn ($q) =>
                 $q->whereHas('category', fn ($c) => $c->where('slug', $request->category))
             )
-            ->whereNotIn('id', $featuredIds)
             ->orderByDesc('published_at')
             ->paginate(9)
             ->withQueryString();
