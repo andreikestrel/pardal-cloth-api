@@ -11,12 +11,15 @@ class OrderResource extends JsonResource
     {
         return [
             'id'                  => $this->id,
+            'source'              => $this->source,
             'status'              => $this->status,
             'subtotal'            => $this->subtotal,
             'discount_promotions' => $this->discount_promotions,
             'discount_coupon'     => $this->discount_coupon,
             'total'               => $this->total,
             'shipping_address'    => $this->shipping_address,
+            'pdv_customer_name'   => $this->pdv_customer_name,
+            'pdv_customer_doc'    => $this->pdv_customer_doc,
             'notes'               => $this->notes,
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,

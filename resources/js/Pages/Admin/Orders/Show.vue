@@ -11,7 +11,12 @@ import PrimaryButton from '@/Components/UI/PrimaryButton.vue'
 import type { Order, OrderStatus } from '@/types'
 
 const props = defineProps<{
-    order: Order & { user: { name: string; email: string } }
+    order: Order & {
+        user: { name: string; email: string } | null
+        pdv_customer_name?: string | null
+        pdv_customer_doc?: string | null
+        source?: string
+    }
 }>()
 
 const statusForm = useForm({
@@ -133,14 +138,38 @@ function formatDate(date: string) {
 
                 <!-- Customer -->
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 text-sm">
-                    <h2 class="font-medium text-gray-900 mb-3">Cliente</h2>
-                    <p class="text-gray-800 font-medium">{{ order.user.name }}</p>
-                    <p class="text-gray-500">{{ order.user.email }}</p>
-                    <div class="mt-3 pt-3 border-t border-gray-100 text-gray-600 leading-relaxed">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-medium text-gray-900">Cliente</h2>
+                        <span v-if="order.source === 'pdv'"
+                            class="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            PDV
+                        </span>
+                    </div>
+
+                    <!-- Online order: user account -->
+                    <template v-if="order.user">
+                        <p class="text-gray-800 font-medium">{{ order.user.name }}</p>
+                        <p class="text-gray-500">{{ order.user.email }}</p>
+                    </template>
+
+                    <!-- PDV walk-in customer -->
+                    <template v-else>
+                        <p class="text-gray-800 font-medium">
+                            {{ order.pdv_customer_name ?? 'Cliente não identificado' }}
+                        </p>
+                        <p v-if="order.pdv_customer_doc" class="text-gray-500">
+                            CPF: {{ order.pdv_customer_doc }}
+                        </p>
+                    </template>
+
+                    <!-- Shipping address (online only) -->
+                    <div v-if="order.shipping_address"
+                        class="mt-3 pt-3 border-t border-gray-100 text-gray-600 leading-relaxed">
                         <p>{{ order.shipping_address.street }}, {{ order.shipping_address.number }}</p>
                         <p>{{ order.shipping_address.district }} — {{ order.shipping_address.city }}/{{ order.shipping_address.state }}</p>
                         <p>CEP {{ order.shipping_address.zip }}</p>
                     </div>
+                    <p v-else class="mt-2 text-gray-400 text-xs">Venda presencial — sem endereço de entrega.</p>
                 </div>
             </div>
         </div>
