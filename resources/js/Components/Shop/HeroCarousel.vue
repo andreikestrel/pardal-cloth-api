@@ -53,33 +53,33 @@ onBeforeUnmount(stop)
 </script>
 
 <template>
-    <div v-if="hasSlides" class="relative overflow-hidden bg-gray-900"
+    <div v-if="hasSlides" class="relative overflow-hidden"
         @mouseenter="stop" @mouseleave="start">
-        <div class="relative aspect-[16/6] sm:aspect-[16/5] min-h-[260px]">
-            <template v-for="(slide, i) in slides" :key="slide.id">
-                <div
-                    class="absolute inset-0 transition-opacity duration-700"
-                    :class="i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-                >
-                    <img v-if="slide.image_url" :src="slide.image_url" :alt="slide.title ?? ''"
-                        class="absolute inset-0 w-full h-full object-cover" />
-                    <div class="absolute inset-0 bg-black/40"></div>
 
-                    <div class="relative h-full flex flex-col items-center justify-center text-center text-white px-6">
-                        <h2 v-if="slide.title" class="text-3xl sm:text-5xl font-bold mb-3 drop-shadow">
+        <!-- Slides — stack via CSS grid so the container takes the height of the active image -->
+        <div class="carousel-track">
+            <template v-for="(slide, i) in slides" :key="slide.id">
+                <div class="carousel-slide"
+                    :class="i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'">
+
+                    <img v-if="slide.image_url" :src="slide.image_url" :alt="slide.title ?? ''"
+                        class="w-full block" />
+
+                    <!-- Text pinned to the bottom of the image -->
+                    <div v-if="slide.title || slide.subtitle || slide.link_url"
+                        class="absolute inset-x-0 bottom-0 flex flex-col items-center text-center pb-8 px-6">
+                        <h2 v-if="slide.title" class="slide-title text-3xl sm:text-5xl font-bold mb-2">
                             {{ slide.title }}
                         </h2>
-                        <p v-if="slide.subtitle" class="text-sm sm:text-lg text-white/90 mb-6 max-w-2xl drop-shadow">
+                        <p v-if="slide.subtitle" class="slide-subtitle text-sm sm:text-lg mb-5 max-w-2xl">
                             {{ slide.subtitle }}
                         </p>
-
                         <a v-if="slide.link_url && isExternal(slide.link_url)"
                             :href="slide.link_url" target="_blank" rel="noopener"
                             class="bg-white text-gray-900 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base hover:bg-gray-100 transition-colors">
                             {{ slide.link_label || 'Saiba mais' }}
                         </a>
-                        <Link v-else-if="slide.link_url"
-                            :href="slide.link_url"
+                        <Link v-else-if="slide.link_url" :href="slide.link_url"
                             class="bg-white text-gray-900 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base hover:bg-gray-100 transition-colors">
                             {{ slide.link_label || 'Saiba mais' }}
                         </Link>
@@ -106,3 +106,30 @@ onBeforeUnmount(stop)
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Stack all slides in the same grid cell so container height = active image height */
+.carousel-track {
+    display: grid;
+}
+
+.carousel-slide {
+    grid-area: 1 / 1;
+    position: relative;
+    transition: opacity 0.7s ease;
+}
+
+.slide-title {
+    color: #fff;
+    -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.85);
+    paint-order: stroke fill;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.slide-subtitle {
+    color: #fff;
+    -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.7);
+    paint-order: stroke fill;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7), 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+</style>
