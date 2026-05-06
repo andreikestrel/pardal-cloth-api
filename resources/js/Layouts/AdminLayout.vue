@@ -24,6 +24,7 @@ const navItems = computed(() => {
         { label: 'Promoções',  href: route('admin.promotions.index') },
         { label: 'Cupons',     href: route('admin.coupons.index') },
         { label: 'Estoque',    href: route('admin.stock.index') },
+        { label: 'PDV',        href: route('admin.pdv.index') },
         { label: 'Catálogo',   href: route('admin.catalog.slides') },
         { label: 'Tags',       href: route('admin.tags.index') },
     ]

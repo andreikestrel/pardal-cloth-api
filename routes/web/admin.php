@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\BlogCategoryAdminController;
+use App\Http\Controllers\Admin\PdvSaleController;
+use App\Http\Controllers\Admin\PdvSessionController;
 use App\Http\Controllers\Admin\TagAdminController;
 use App\Http\Controllers\Admin\BlogPostAdminController;
 use App\Http\Controllers\Admin\CatalogAdminController;
@@ -103,4 +105,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [UserAdminController::class, 'store'])->name('users.store');
     Route::post('/users/{user}/resend', [UserAdminController::class, 'resend'])->name('users.resend');
     Route::delete('/users/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
+
+    // PDV (point of sale)
+    Route::prefix('pdv')->name('pdv.')->group(function () {
+        Route::get('/',                                     [PdvSessionController::class, 'index'])->name('index');
+        Route::post('/sessions',                            [PdvSessionController::class, 'store'])->name('sessions.open');
+        Route::get('/sessions/{session}/close',             [PdvSessionController::class, 'close'])->name('sessions.close');
+        Route::post('/sessions/{session}/close',            [PdvSessionController::class, 'processClose'])->name('sessions.close.confirm');
+
+        Route::get('/terminal',                             [PdvSaleController::class, 'terminal'])->name('terminal');
+        Route::get('/products',                             [PdvSaleController::class, 'products'])->name('products');
+        Route::post('/finalize',                            [PdvSaleController::class, 'finalize'])->name('finalize');
+        Route::get('/sales/{order}/receipt',                [PdvSaleController::class, 'receipt'])->name('receipt');
+    });
 });
