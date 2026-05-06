@@ -19,7 +19,7 @@ interface Post {
 
 defineProps<{ posts: Post[] }>()
 
-const headers = ['', 'Título', 'Categoria', 'Autor', 'Status', 'Publicado em']
+const headers = ['', 'Título', 'Categoria', 'Autor', 'Status', 'Publicado em', '']
 
 function status(post: Post): { label: string; classes: string } {
     if (!post.active) return { label: 'Inativo', classes: 'bg-gray-100 text-gray-500' }
@@ -69,9 +69,15 @@ function status(post: Post): { label: string; classes: string } {
                 <td class="px-3 py-3 text-xs text-gray-500">
                     {{ post.published_at ? new Date(post.published_at).toLocaleDateString('pt-BR') : '—' }}
                 </td>
+                <td class="px-3 py-3 text-right">
+                    <Link :href="route('admin.blog.posts.edit', post.id)"
+                        class="text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg px-3 py-1.5 transition-colors hover:bg-gray-50">
+                        Editar
+                    </Link>
+                </td>
             </tr>
             <tr v-if="!posts.length">
-                <td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">
+                <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">
                     Nenhum post ainda.
                 </td>
             </tr>

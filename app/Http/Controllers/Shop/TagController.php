@@ -45,8 +45,9 @@ class TagController extends Controller
                 'slug'         => $post->slug,
                 'excerpt'      => $post->excerpt,
                 'published_at' => $post->published_at,
-                'cover_url'    => $post->cover_url,
-                'category'     => $post->category ? [
+                'cover_url'      => $post->cover_url,
+                'cover_position' => $post->cover_position,
+                'category'       => $post->category ? [
                     'name'  => $post->category->name,
                     'color' => $post->category->color,
                 ] : null,

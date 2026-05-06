@@ -21,6 +21,7 @@ interface BlogPost {
     published_at: string | null
     active: boolean
     cover_url: string | null
+    cover_position: string | null
     tags?: BlogTag[]
 }
 
@@ -35,6 +36,9 @@ const draftKey = computed(() => `blog_draft_${props.post?.id ?? 'new'}`)
 
 const tab = ref<'editor' | 'preview'>('editor')
 
+// Parse stored "X% Y%" into separate numeric refs for the drag UI
+const initialPos = parsePosition(props.post?.cover_position ?? '50% 50%')
+
 const form = useForm({
     title:            props.post?.title ?? '',
     excerpt:          props.post?.excerpt ?? '',
@@ -43,11 +47,67 @@ const form = useForm({
     published_at:     props.post?.published_at?.slice(0, 16) ?? '',
     active:           props.post?.active ?? true,
     cover:            null as File | null,
-    tag_ids:          (props.post?.tags ?? []).map(t => t.id) as number[],
+    cover_position:   props.post?.cover_position ?? '50% 50%',
+    tag_ids:          (Array.isArray(props.post?.tags) ? props.post!.tags : []).map(t => t.id) as number[],
 })
 
 const coverPreview = ref<string | null>(props.post?.cover_url ?? null)
+const coverX = ref(initialPos.x)
+const coverY = ref(initialPos.y)
+const coverFrameRef = ref<HTMLElement | null>(null)
 const lastSavedAt = ref<Date | null>(null)
+
+function parsePosition(value: string): { x: number; y: number } {
+    const match = value.match(/^(\d{1,3})% (\d{1,3})%$/)
+    if (!match) return { x: 50, y: 50 }
+    return { x: Number(match[1]), y: Number(match[2]) }
+}
+
+// Keep the form-submitted string in sync with the draggable refs
+watch([coverX, coverY], () => {
+    form.cover_position = `${Math.round(coverX.value)}% ${Math.round(coverY.value)}%`
+})
+
+// Drag-to-reposition: drag the image with the cursor.
+// Dragging up reveals the bottom of the image → object-position-y increases.
+let dragState: { startMouseX: number; startMouseY: number; startPosX: number; startPosY: number } | null = null
+
+function onCoverDragStart(e: MouseEvent) {
+    if (!coverPreview.value) return
+    e.preventDefault()
+    dragState = {
+        startMouseX: e.clientX,
+        startMouseY: e.clientY,
+        startPosX:   coverX.value,
+        startPosY:   coverY.value,
+    }
+    window.addEventListener('mousemove', onCoverDragMove)
+    window.addEventListener('mouseup', onCoverDragEnd)
+}
+
+function onCoverDragMove(e: MouseEvent) {
+    if (!dragState || !coverFrameRef.value) return
+    const rect = coverFrameRef.value.getBoundingClientRect()
+    const dx = e.clientX - dragState.startMouseX
+    const dy = e.clientY - dragState.startMouseY
+    coverX.value = clamp(dragState.startPosX - (dx / rect.width) * 100, 0, 100)
+    coverY.value = clamp(dragState.startPosY - (dy / rect.height) * 100, 0, 100)
+}
+
+function onCoverDragEnd() {
+    dragState = null
+    window.removeEventListener('mousemove', onCoverDragMove)
+    window.removeEventListener('mouseup', onCoverDragEnd)
+}
+
+function clamp(n: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, n))
+}
+
+function resetCoverPosition() {
+    coverX.value = 50
+    coverY.value = 50
+}
 
 // ─── Local autosave (formatting + uploaded image URLs persist via HTML) ────────
 function loadDraft() {
@@ -181,8 +241,24 @@ function destroy() {
                     <aside class="space-y-5">
                         <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
                             <FormField label="Imagem de capa" :error="form.errors.cover" :required="!isEdit">
-                                <div v-if="coverPreview" class="aspect-[16/9] rounded-xl overflow-hidden bg-gray-100 mb-2">
-                                    <img :src="coverPreview" alt="" class="w-full h-full object-cover" />
+                                <div v-if="coverPreview"
+                                    ref="coverFrameRef"
+                                    @mousedown="onCoverDragStart"
+                                    class="aspect-[16/9] rounded-xl overflow-hidden bg-gray-100 mb-2 cursor-move select-none relative group">
+                                    <img :src="coverPreview" alt="" draggable="false"
+                                        :style="{ objectPosition: `${coverX}% ${coverY}%` }"
+                                        class="w-full h-full object-cover pointer-events-none" />
+                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                        <span class="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-medium bg-black/60 px-2 py-1 rounded-md">
+                                            Arraste para reposicionar
+                                        </span>
+                                    </div>
+                                </div>
+                                <div v-if="coverPreview" class="flex items-center justify-between mb-2 text-xs text-gray-400">
+                                    <span>Posição: {{ Math.round(coverX) }}% × {{ Math.round(coverY) }}%</span>
+                                    <button type="button" @click="resetCoverPosition" class="text-gray-500 hover:text-gray-900 underline">
+                                        Centralizar
+                                    </button>
                                 </div>
                                 <input type="file" accept="image/*" @change="onCoverChange"
                                     :required="!isEdit"
@@ -219,7 +295,9 @@ function destroy() {
             <!-- Preview tab — same component used on the public blog page -->
             <div v-show="tab === 'preview'" class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div v-if="coverPreview" class="aspect-[21/9] bg-gray-100">
-                    <img :src="coverPreview" :alt="form.title" class="w-full h-full object-cover" />
+                    <img :src="coverPreview" :alt="form.title"
+                        :style="{ objectPosition: `${coverX}% ${coverY}%` }"
+                        class="w-full h-full object-cover" />
                 </div>
                 <article class="max-w-3xl mx-auto px-6 py-10">
                     <p v-if="form.blog_category_id" class="mb-3">

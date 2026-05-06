@@ -22,6 +22,7 @@ const editor = useEditor({
     extensions: [
         StarterKit.configure({
             heading: { levels: [2, 3] },
+            link: false,
         }),
         Image.configure({ inline: false, allowBase64: false }),
         Link.configure({

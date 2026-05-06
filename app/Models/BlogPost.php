@@ -21,6 +21,7 @@ class BlogPost extends Model implements HasMedia
         'slug',
         'excerpt',
         'body_html',
+        'cover_position',
         'published_at',
         'active',
     ];

@@ -13,6 +13,7 @@ interface Post {
     excerpt: string | null
     published_at: string
     cover_url: string | null
+    cover_position: string | null
     category: Category | null
     author: Author | null
 }
@@ -57,6 +58,7 @@ function formatDate(iso: string): string {
                         class="absolute inset-0 transition-opacity duration-700"
                         :class="i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'">
                         <img v-if="post.cover_url" :src="post.cover_url" :alt="post.title"
+                            :style="{ objectPosition: post.cover_position ?? '50% 50%' }"
                             class="absolute inset-0 w-full h-full object-cover" />
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
@@ -113,6 +115,7 @@ function formatDate(iso: string): string {
                     class="group flex flex-col">
                     <div class="aspect-[16/10] rounded-2xl overflow-hidden bg-gray-100 mb-4 relative">
                         <img v-if="post.cover_url" :src="post.cover_url" :alt="post.title"
+                            :style="{ objectPosition: post.cover_position ?? '50% 50%' }"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <span v-if="post.category"
                             :style="{ backgroundColor: post.category.color, color: '#fff' }"

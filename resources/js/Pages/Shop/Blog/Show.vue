@@ -14,6 +14,7 @@ interface Post {
     body_html: string
     published_at: string
     cover_url: string | null
+    cover_position: string | null
     category: Category | null
     author: Author | null
 }
@@ -30,7 +31,9 @@ function formatDate(iso: string): string {
         <article>
             <!-- Cover -->
             <div v-if="post.cover_url" class="aspect-[21/9] bg-gray-100 overflow-hidden">
-                <img :src="post.cover_url" :alt="post.title" class="w-full h-full object-cover" />
+                <img :src="post.cover_url" :alt="post.title"
+                    :style="{ objectPosition: post.cover_position ?? '50% 50%' }"
+                    class="w-full h-full object-cover" />
             </div>
 
             <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
@@ -68,6 +71,7 @@ function formatDate(iso: string): string {
                     <Link v-for="r in related" :key="r.id" :href="route('blog.show', r.slug)" class="group">
                         <div class="aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 mb-3">
                             <img v-if="r.cover_url" :src="r.cover_url" :alt="r.title"
+                                :style="{ objectPosition: r.cover_position ?? '50% 50%' }"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         </div>
                         <h3 class="text-sm font-semibold text-gray-900 group-hover:text-gray-700 line-clamp-2">{{ r.title }}</h3>
