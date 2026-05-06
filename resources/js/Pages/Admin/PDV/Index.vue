@@ -13,14 +13,9 @@ interface Register {
     active_session: { id: string; operator: string; opened_at: string } | null
 }
 
-interface MySession {
-    id: string
-    register: string
-}
-
 const props = defineProps<{
     registers: Register[]
-    mySession: MySession | null
+    mySession: { id: string; register: string } | null
 }>()
 
 const page = usePage<PageProps>()
@@ -61,20 +56,6 @@ function submitOpen() {
             </template>
         </PageHeader>
 
-        <!-- Resume active session banner -->
-        <div v-if="mySession"
-            class="mb-6 flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-5 py-4">
-            <div>
-                <p class="text-sm font-semibold text-green-800">Você tem uma sessão aberta em {{ mySession.register }}</p>
-                <p class="text-xs text-green-600 mt-0.5">Clique em Retomar para acessar o terminal.</p>
-            </div>
-            <a :href="route('admin.pdv.terminal')"
-                class="text-sm font-medium text-white px-4 py-2 rounded-lg"
-                :style="{ backgroundColor: 'var(--color-primary)' }">
-                Retomar terminal
-            </a>
-        </div>
-
         <!-- Register grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div v-for="reg in registers" :key="reg.id"
@@ -94,15 +75,20 @@ function submitOpen() {
                     Operador: <span class="font-medium">{{ reg.active_session.operator }}</span>
                 </p>
 
-                <button
-                    :disabled="!!reg.active_session && !mySession"
+                <!-- Occupied: show Retomar -->
+                <a v-if="reg.active_session"
+                    :href="route('admin.pdv.terminal')"
+                    class="w-full py-2 rounded-xl text-sm font-medium text-center text-white hover:opacity-90 transition-opacity"
+                    :style="{ backgroundColor: 'var(--color-primary)' }">
+                    Retomar
+                </a>
+
+                <!-- Free: open session -->
+                <button v-else
                     @click="openModal(reg.id)"
-                    :class="['w-full py-2 rounded-xl text-sm font-medium transition-colors',
-                        reg.active_session
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'text-white hover:opacity-90']"
-                    :style="!reg.active_session ? { backgroundColor: 'var(--color-primary)' } : {}">
-                    {{ reg.active_session ? 'Caixa ocupado' : 'Abrir caixa' }}
+                    class="w-full py-2 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                    :style="{ backgroundColor: 'var(--color-primary)' }">
+                    Abrir caixa
                 </button>
             </div>
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
+import type { PageProps } from '@/types'
 
 interface Session {
     id: string
@@ -37,6 +39,11 @@ interface CartLine {
 }
 
 const props = defineProps<{ session: Session }>()
+
+const page = usePage<PageProps>()
+const companyName = computed(() => page.props.settings?.company_name || 'PDV')
+
+const showCloseConfirm = ref(false)
 
 // — Cart state —
 const lines          = ref<CartLine[]>([])
@@ -277,28 +284,20 @@ function cancelSale() {
 
         <!-- Top bar -->
         <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <a :href="route('admin.pdv.index')"
-                    class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                    class="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-800 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
-                    Voltar
                 </a>
                 <span class="text-gray-200">|</span>
-                <span class="text-sm font-semibold text-gray-800">Terminal PDV</span>
+                <span class="text-sm font-semibold text-gray-800">{{ companyName }}</span>
             </div>
-            <div class="flex items-center gap-5">
-                <p class="text-sm text-gray-500">
-                    Operador: <strong class="text-gray-700">{{ session.operator }}</strong>
-                    &nbsp;·&nbsp;
-                    Caixa: <strong class="text-gray-700">{{ session.register }}</strong>
-                </p>
-                <a :href="session.close_url"
-                    class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors">
-                    Fechar caixa
-                </a>
-            </div>
+            <button @click="showCloseConfirm = true"
+                class="text-sm font-medium text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50 transition-colors">
+                Fechar
+            </button>
         </div>
 
         <!-- Content -->
@@ -617,6 +616,34 @@ function cancelSale() {
                             </button>
                         </div>
                     </template>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Close session confirmation modal -->
+        <transition name="fade">
+            <div v-if="showCloseConfirm" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black/40" @click="showCloseConfirm = false"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Fechar caixa?</h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        Você será redirecionado para a tela de fechamento onde poderá conferir o saldo.
+                    </p>
+                    <div class="flex gap-3">
+                        <button @click="showCloseConfirm = false"
+                            class="flex-1 text-sm border border-gray-300 rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <a :href="session.close_url"
+                            class="flex-1 text-sm font-medium text-white rounded-xl py-2.5 bg-red-600 hover:bg-red-700 transition-colors text-center">
+                            Fechar caixa
+                        </a>
+                    </div>
                 </div>
             </div>
         </transition>
