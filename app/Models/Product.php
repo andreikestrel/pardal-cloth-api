@@ -32,6 +32,8 @@ class Product extends Model implements HasMedia
         ];
     }
 
+    protected $appends = ['cover_url'];
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -40,5 +42,15 @@ class Product extends Model implements HasMedia
     public function variations(): HasMany
     {
         return $this->hasMany(ProductVariation::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('cover')->singleFile();
+    }
+
+    public function getCoverUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('cover') ?: null;
     }
 }

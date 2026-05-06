@@ -156,9 +156,9 @@ function lowestPrice(product: Product): string {
                     :href="route('shop.show', product.slug)"
                     class="group"
                 >
-                    <div class="aspect-[3/4] rounded-xl overflow-hidden bg-gray-100 mb-3">
-                        <img v-if="product.images?.[0]" :src="product.images[0].url" :alt="product.name"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <div class="aspect-[3/4] rounded-xl overflow-hidden bg-gray-50 mb-3 flex items-center justify-center p-4">
+                        <img v-if="(product as any).cover_url" :src="(product as any).cover_url" :alt="product.name"
+                            class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform" />
                     </div>
                     <p class="text-sm font-medium text-gray-900 truncate">{{ product.name }}</p>
                     <p class="text-sm text-gray-500">A partir de {{ lowestPrice(product) }}</p>

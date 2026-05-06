@@ -109,7 +109,7 @@ function formatBRL(value: string | number): string {
                             </div>
                         </div>
 
-                        <Link :href="route('checkout.start')" @click="closeCart"
+                        <Link :href="route('checkout.index')" @click="closeCart"
                             class="block w-full text-center text-white py-3 rounded-xl font-medium"
                             style="background-color: var(--color-primary)">
                             Finalizar compra

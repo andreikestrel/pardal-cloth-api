@@ -14,14 +14,14 @@ function lowestPrice(product: Product): string {
 
 <template>
     <Link :href="route('shop.show', product.slug)" class="group block">
-        <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 mb-3">
+        <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-50 mb-3 flex items-center justify-center p-4">
             <img
-                v-if="product.images?.[0]"
-                :src="product.images[0].url"
+                v-if="(product as any).cover_url"
+                :src="(product as any).cover_url"
                 :alt="product.name"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
-            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-sm">
+            <div v-else class="text-gray-300 text-sm">
                 Sem imagem
             </div>
         </div>

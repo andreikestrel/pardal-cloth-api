@@ -24,7 +24,7 @@ class OrderAdminController extends Controller
     public function show(Order $order): Response
     {
         return Inertia::render('Admin/Orders/Show', [
-            'order' => new OrderResource($order->load(['user', 'items.variation.product', 'payment', 'statusHistory'])),
+            'order' => (new OrderResource($order->load(['user', 'items.variation.product', 'payment', 'statusHistory'])))->resolve(),
         ]);
     }
 

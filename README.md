@@ -8,7 +8,7 @@ A full-featured e-commerce platform built as a portfolio project to demonstrate 
 - **Cart & Checkout** — promotions and coupons applied automatically, server-recalculated totals (frontend totals are display-only), Pix / Boleto / Credit Card via Mercado Pago or Asaas.
 - **Order tracking** — real-time status updates, downloadable PDF invoices, customer order history.
 - **Admin panel** — products, categories, promotions, coupons, orders, stock, reports — all in one place. Inventory adjustments with reason codes and audit log.
-- **Blog module** — toggleable in settings. Tiptap rich-text editor with image paste/drag, autosave to `localStorage`, in-editor preview tab. Server-side HTML sanitization via HTMLPurifier. Public blog has a featured carousel and category-filtered grid.
+- **Blog module** — toggleable in settings. Tiptap rich-text editor with image paste/drag, autosave to `localStorage`, in-editor preview tab, and drag-to-reposition cover focal point. Server-side HTML sanitization via HTMLPurifier. Public blog has a featured carousel and category-filtered grid.
 - **Catalog carousel** — admin-configurable hero slides with image upload, free-form link target, ordering and active toggle.
 - **User invitations** — admins invite employees by email; the invitee gets a 24h link to set their own password (no temporary passwords shared).
 - **Barcode scanner** — product variations editor reads EAN-13 / Code 128 / QR via the device camera (ZXing).
@@ -110,11 +110,12 @@ The PHP server never holds long-lived connections. The WS service runs independe
 | ✅ | Checkout (Mercado Pago + Asaas), order tracking |
 | ✅ | Admin: products/categories/promotions/coupons/orders/stock/reports |
 | ✅ | White-label theming and module toggle for blog |
-| ✅ | Blog with rich-text editor, autosave, preview, public carousel |
+| ✅ | Blog with rich-text editor, autosave, preview, cover focal-point drag, public carousel |
 | ✅ | Hero carousel (admin-configurable slides) |
+| ✅ | Tag landing pages — cross-links products and blog posts by tag |
 | ✅ | User invitations (24h email link, no temporary passwords) |
 | ✅ | Barcode scanner in product variations editor |
-| 🚧 | Tagging system across products, posts and search |
+| ✅ | Tagging system across products, posts and search |
 | 📋 | PDV (point-of-sale) — in-person sales terminal, manual payment, source-tagged orders |
 | 📋 | ERP-style modules — supplier directory, purchase orders, accounts payable, cash-flow reports |
 | 📋 | WebSocket service deployment scripts |
@@ -173,7 +174,9 @@ php artisan db:seed     # admin@pardal.com / 123456 + sample products
 Run everything with one command:
 
 ```bash
-npm run dev:full        # Laravel + Queue worker + Vite (concurrently)
+composer dev        # Laravel + Queue worker + Vite (concurrently)
+# Windows shortcut:
+dev.bat
 ```
 
 ## Email (development)

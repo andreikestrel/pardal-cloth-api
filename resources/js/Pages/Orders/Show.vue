@@ -19,8 +19,11 @@ function formatCurrency(value: string) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(value))
 }
 
-function formatDate(date: string) {
-    return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(date))
+function formatDate(date: string | null | undefined) {
+    if (!date) return '—'
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return '—'
+    return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(d)
 }
 </script>
 
@@ -69,8 +72,8 @@ function formatDate(date: string) {
                             <div v-for="item in order.items" :key="item.id"
                                 class="flex items-center gap-4 px-5 py-4 text-sm">
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-medium text-gray-900 truncate">{{ item.variation_id }}</p>
-                                    <p class="text-gray-500 text-xs mt-0.5">{{ item.size }} · {{ item.color }}</p>
+                                    <p class="font-medium text-gray-900 truncate">{{ (item as any).product_name ?? item.variation_id }}</p>
+                                    <p class="text-gray-500 text-xs mt-0.5">{{ (item as any).size ?? '—' }} · {{ (item as any).color ?? '—' }}</p>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <p class="text-gray-700">{{ item.quantity }}× {{ formatCurrency(item.unit_price) }}</p>
@@ -114,7 +117,7 @@ function formatDate(date: string) {
                         <p class="text-gray-600 leading-relaxed">
                             {{ order.shipping_address.street }}, {{ order.shipping_address.number }}<br />
                             {{ order.shipping_address.district }} — {{ order.shipping_address.city }}/{{ order.shipping_address.state }}<br />
-                            CEP {{ order.shipping_address.zip }}
+                            CEP {{ (order.shipping_address as any).zip_code ?? order.shipping_address.zip }}
                         </p>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import FormField from '@/Components/UI/FormField.vue'
 import PrimaryButton from '@/Components/UI/PrimaryButton.vue'
@@ -27,8 +28,8 @@ const form = useForm({
     base_price:  props.product?.base_price ?? '',
     category_id: props.product?.category_id ?? '',
     image:       null as File | null,
-    tag_ids:     (props.product?.tags ?? []).map((t: Tag) => t.id) as number[],
-    variations:  (props.product?.variations ?? []).map((v) => ({
+    tag_ids:     (Array.isArray(props.product?.tags) ? props.product!.tags : []).map((t: Tag) => t.id) as number[],
+    variations:  (Array.isArray(props.product?.variations) ? props.product!.variations : []).map((v) => ({
         size: v.size, color: v.color, price: v.price, stock: v.stock, min_stock: v.min_stock, sku: v.sku,
     })) as Variation[],
 })
@@ -39,17 +40,27 @@ function autoSlug() {
     }
 }
 
+// ProductResource exposes the saved cover URL as `cover` — show it as the initial preview
+const imagePreview = ref<string | null>((props.product as any)?.cover ?? null)
+
 function onImageChange(e: Event) {
     const target = e.target as HTMLInputElement
-    form.image = target.files?.[0] ?? null
+    const file = target.files?.[0] ?? null
+    form.image = file
+    if (file) {
+        const reader = new FileReader()
+        reader.onload = () => imagePreview.value = reader.result as string
+        reader.readAsDataURL(file)
+    }
 }
 
 function submit() {
-    const options = { forceFormData: true }
+    // PHP only parses multipart/form-data on POST — for PUT we spoof via _method form field
     if (props.method === 'put') {
-        form.post(props.submitRoute, { ...options, _method: 'PUT' } as any)
+        form.transform((data) => ({ ...data, _method: 'PUT' }))
+            .post(props.submitRoute, { forceFormData: true })
     } else {
-        form.post(props.submitRoute, options)
+        form.post(props.submitRoute, { forceFormData: true })
     }
 }
 </script>
@@ -82,8 +93,14 @@ function submit() {
             </FormField>
 
             <FormField label="Imagem da capa" :error="form.errors.image">
+                <div v-if="imagePreview" class="aspect-[3/4] w-32 rounded-xl overflow-hidden bg-gray-100 mb-2 border border-gray-200">
+                    <img :src="imagePreview" alt="" class="w-full h-full object-cover" />
+                </div>
                 <input type="file" accept="image/*" @change="onImageChange"
                     class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm" />
+                <p v-if="product && imagePreview" class="text-xs text-gray-400 mt-1">
+                    Selecione um arquivo para substituir a imagem atual.
+                </p>
             </FormField>
         </div>
 

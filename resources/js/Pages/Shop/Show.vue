@@ -49,9 +49,9 @@ function formatCurrency(value: string) {
             <div class="flex flex-col md:flex-row gap-12">
                 <!-- Image -->
                 <div class="md:w-1/2">
-                    <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100">
-                        <img v-if="product.images?.[0]" :src="product.images[0].url" :alt="product.name"
-                            class="w-full h-full object-cover" />
+                    <div class="aspect-[3/4] rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center p-6">
+                        <img v-if="(product as any).cover_url" :src="(product as any).cover_url" :alt="product.name"
+                            class="max-w-full max-h-full object-contain" />
                     </div>
                 </div>
 

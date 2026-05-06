@@ -40,7 +40,7 @@ class OrderController extends Controller
         abort_if($order->user_id !== $request->user()->id, 403);
 
         return Inertia::render('Orders/Show', [
-            'order' => new OrderResource($order->load(['items.variation.product', 'payment', 'statusHistory'])),
+            'order' => (new OrderResource($order->load(['items.variation.product', 'payment', 'statusHistory'])))->resolve(),
         ]);
     }
 
@@ -48,7 +48,8 @@ class OrderController extends Controller
     {
         $order = $this->orderService->create($request->validated(), $request->user());
 
-        return redirect()->route('orders.pay', $order);
+        // Redirect to the payment-method picker page (GET) — orders.pay is POST-only
+        return redirect()->route('checkout.payment', $order);
     }
 
     public function pay(PayOrderRequest $request, Order $order): \Illuminate\Http\JsonResponse
@@ -65,7 +66,7 @@ class OrderController extends Controller
         abort_if($order->user_id !== $request->user()->id, 403);
 
         return Inertia::render('Orders/PaymentStatus', [
-            'order' => new OrderResource($order->load('payment')),
+            'order' => (new OrderResource($order->load('payment')))->resolve(),
         ]);
     }
 

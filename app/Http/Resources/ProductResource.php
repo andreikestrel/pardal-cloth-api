@@ -23,7 +23,7 @@ class ProductResource extends JsonResource
                 'id'    => $t->id,
                 'name'  => $t->name,
                 'color' => $t->color,
-            ])->values()),
+            ])->values()->all()),
             'created_at'  => $this->created_at,
         ];
     }
