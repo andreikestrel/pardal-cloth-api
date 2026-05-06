@@ -15,7 +15,8 @@ class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
-        $query = Product::with(['variations', 'media', 'category']);
+        $query = Product::with(['variations', 'media', 'category'])
+            ->whereHas('variations', fn ($q) => $q->where('stock', '>', 0));
 
         // FULLTEXT search — uses MATCH ... AGAINST in BOOLEAN MODE for prefix support
         // (e.g. "cami*" matches "camiseta"). Falls back to LIKE for very short queries.
@@ -96,6 +97,7 @@ class ProductController extends Controller
         return Inertia::render('Shop/Show', [
             'product' => $product,
             'related' => Product::with(['variations', 'media'])
+                ->whereHas('variations', fn ($q) => $q->where('stock', '>', 0))
                 ->where('category_id', $product->category_id)
                 ->where('id', '!=', $product->id)
                 ->take(4)
