@@ -9,7 +9,7 @@ import type { Order, OrderStatus } from '@/types'
 
 defineProps<{ orders: Order[] }>()
 
-const headers = ['Pedido', 'Cliente', 'Total', 'Status', 'Data', 'Ações']
+const headers = ['Pedido', 'Origem', 'Cliente', 'Total', 'Status', 'Data', 'Ações']
 
 function formatCurrency(value: string) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(value))
@@ -30,8 +30,16 @@ function formatDate(date: string) {
                 <td class="px-5 py-3 text-sm font-mono font-medium text-gray-900">
                     #{{ order.id.slice(0, 8).toUpperCase() }}
                 </td>
+                <td class="px-5 py-3">
+                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full',
+                        (order as any).source === 'pdv'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-blue-100 text-blue-700']">
+                        {{ (order as any).source === 'pdv' ? 'PDV' : 'Catálogo' }}
+                    </span>
+                </td>
                 <td class="px-5 py-3 text-sm text-gray-600">
-                    {{ (order as any).user?.name ?? '—' }}
+                    {{ (order as any).user?.name ?? (order as any).pdv_customer_name ?? 'Balcão' }}
                 </td>
                 <td class="px-5 py-3 text-sm text-gray-700">{{ formatCurrency(order.total) }}</td>
                 <td class="px-5 py-3">
@@ -44,7 +52,7 @@ function formatDate(date: string) {
                 </td>
             </tr>
             <tr v-if="!orders.length">
-                <td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">
+                <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">
                     Nenhum pedido encontrado.
                 </td>
             </tr>
