@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BlogCategoryAdminController;
+use App\Http\Controllers\Admin\CashRegisterAdminController;
 use App\Http\Controllers\Admin\PdvSaleController;
 use App\Http\Controllers\Admin\PdvSessionController;
 use App\Http\Controllers\Admin\TagAdminController;
@@ -109,6 +110,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // PDV (point of sale)
     Route::prefix('pdv')->name('pdv.')->group(function () {
         Route::get('/',                                     [PdvSessionController::class, 'index'])->name('index');
+        Route::get('/registers',                            [CashRegisterAdminController::class, 'index'])->name('registers.index');
+        Route::post('/registers',                           [CashRegisterAdminController::class, 'store'])->name('registers.store');
+        Route::put('/registers/{register}',                 [CashRegisterAdminController::class, 'update'])->name('registers.update');
+        Route::delete('/registers/{register}',              [CashRegisterAdminController::class, 'destroy'])->name('registers.destroy');
         Route::post('/sessions',                            [PdvSessionController::class, 'store'])->name('sessions.open');
         Route::get('/sessions/{session}/close',             [PdvSessionController::class, 'close'])->name('sessions.close');
         Route::post('/sessions/{session}/close',            [PdvSessionController::class, 'processClose'])->name('sessions.close.confirm');

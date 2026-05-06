@@ -52,7 +52,14 @@ function submitOpen() {
 
 <template>
     <AdminLayout>
-        <PageHeader title="PDV — Caixas" subtitle="Selecione um caixa para iniciar ou retomar uma sessão." />
+        <PageHeader title="PDV — Caixas" subtitle="Selecione um caixa para iniciar ou retomar uma sessão.">
+            <template #action>
+                <a :href="route('admin.pdv.registers.index')"
+                    class="text-sm text-gray-500 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">
+                    Gerenciar caixas
+                </a>
+            </template>
+        </PageHeader>
 
         <!-- Resume active session banner -->
         <div v-if="mySession"
