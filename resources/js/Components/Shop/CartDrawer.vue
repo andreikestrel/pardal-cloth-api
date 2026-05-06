@@ -58,7 +58,10 @@ function formatBRL(value: string | number): string {
                     <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                         <div v-for="line in calculation?.items ?? []" :key="line.variation_id"
                             class="flex gap-3 pb-4 border-b border-gray-100 last:border-b-0">
-                            <div class="w-20 h-24 rounded-lg bg-gray-100 shrink-0 overflow-hidden"></div>
+                            <div class="w-20 h-24 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
+                                <img v-if="line.cover_url" :src="line.cover_url" :alt="line.product_name ?? ''"
+                                    class="w-full h-full object-cover" />
+                            </div>
 
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">

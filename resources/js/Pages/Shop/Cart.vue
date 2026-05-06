@@ -64,23 +64,23 @@ function handleRemoveCoupon() {
             <div v-else class="flex flex-col lg:flex-row gap-8">
                 <!-- Items list -->
                 <div class="flex-1 space-y-4">
-                    <div v-for="item in items" :key="item.variation_id"
+                    <div v-for="item in (calculation?.items ?? items)" :key="item.variation_id"
                         class="flex gap-4 p-4 bg-white border border-gray-200 rounded-2xl">
-                        <!-- Product image placeholder -->
+                        <!-- Product image -->
                         <div class="w-20 h-20 rounded-xl bg-gray-100 shrink-0 overflow-hidden">
-                            <img v-if="item.variation?.product" :src="(item.variation as any)?.cover"
+                            <img v-if="item.cover_url" :src="item.cover_url" :alt="item.product_name ?? ''"
                                 class="w-full h-full object-cover" />
                         </div>
 
                         <div class="flex-1 min-w-0">
                             <p class="font-medium text-gray-900 truncate">
-                                {{ item.variation?.product?.name ?? 'Produto' }}
+                                {{ item.product_name ?? 'Produto' }}
                             </p>
                             <p class="text-sm text-gray-500 mt-0.5">
-                                {{ item.variation?.size }} · {{ item.variation?.color }}
+                                {{ item.size }} · {{ item.color }}
                             </p>
-                            <p v-if="item.variation?.price" class="text-sm font-medium text-gray-900 mt-1">
-                                {{ formatCurrency(item.variation.price) }}
+                            <p v-if="item.unit_price" class="text-sm font-medium text-gray-900 mt-1">
+                                {{ formatCurrency(item.unit_price) }}
                             </p>
                         </div>
 

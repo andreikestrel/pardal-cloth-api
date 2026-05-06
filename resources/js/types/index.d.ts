@@ -53,6 +53,7 @@ export interface CartLineItem {
     unit_price?: string | null
     size?: string | null
     color?: string | null
+    cover_url?: string | null
     discount?: string | null
     subtotal?: string | null
 }

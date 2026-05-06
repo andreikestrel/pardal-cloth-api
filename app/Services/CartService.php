@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DataTransferObjects\CartCalculation;
 use App\DataTransferObjects\CartItemData;
 use App\Models\ProductVariation;
-use Illuminate\Support\Facades\DB;
 
 class CartService
 {
@@ -24,7 +23,7 @@ class CartService
     {
         $variationIds = array_column($rawItems, 'variation_id');
 
-        $variations = ProductVariation::with('product.category')
+        $variations = ProductVariation::with('product.category', 'product.media')
             ->whereIn('id', $variationIds)
             ->get()
             ->keyBy('id');
@@ -71,6 +70,7 @@ class CartService
                 unit_price:       $item['unit_price'],
                 size:             $item['variation']->size,
                 color:            $item['variation']->color,
+                cover_url:        $item['variation']->product->cover_url,
                 discount:         $item['discount'],
                 subtotal:         $subtotal,
             );

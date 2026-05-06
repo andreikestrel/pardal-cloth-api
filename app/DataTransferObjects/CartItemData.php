@@ -12,6 +12,7 @@ final class CartItemData
         public readonly ?string $unit_price = null,
         public readonly ?string $size = null,
         public readonly ?string $color = null,
+        public readonly ?string $cover_url = null,
         public readonly ?string $discount = null,
         public readonly ?string $subtotal = null,
         public readonly ?string $promotion_applied = null,
